@@ -436,7 +436,7 @@ impl MapageTypeActorState
 
                         self.send_not_done_4_newlines().await?;
 
-                        return Ok(());
+                        //return Ok(());
 
                     }
 

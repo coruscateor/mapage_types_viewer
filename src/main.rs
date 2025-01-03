@@ -24,6 +24,10 @@ mod supported_type_sub_contents;
 
 pub use supported_type_sub_contents::*;
 
+mod whatever_sub_contents;
+
+pub use whatever_sub_contents::*;
+
 fn main()
 {
 

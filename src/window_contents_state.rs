@@ -59,10 +59,10 @@ struct WindowContentsMutState
 {
 
     output_format: OutputFormat,
-    mapage_type: AllOrNot<MapageType>,
+    all_or_not_mapage_type: AllOrNot<MapageType>,
     //supported_type_strs_dropdown_nopt: NonOption<DropDown>,
     //types_dropdown_nopt: NonOption<DropDown>
-    supported_type: AllOrNot<SupportedType>
+    //supported_type: AllOrNot<SupportedType>
 
 }
 
@@ -76,10 +76,10 @@ impl WindowContentsMutState
         {
 
             output_format: OutputFormat::Json,
-            mapage_type: AllOrNot::All, //MapageType::SupportedType
+            all_or_not_mapage_type: AllOrNot::All, //MapageType::SupportedType
             //supported_type_strs_dropdown_nopt: NonOption::invalid(),
             //types_dropdown_nopt: NonOption::invalid()
-            supported_type: AllOrNot::All
+            //supported_type: AllOrNot::All
 
         }
 
@@ -235,6 +235,8 @@ impl WindowContentsState
 
         let text_output = TextView::builder().editable(false).build();
 
+        text_output.set_vexpand(true);
+
         output_contents_box.append(&text_output);
 
         let output_contents_box_sw = ScrolledWindow::builder().child(&output_contents_box).build();
@@ -243,7 +245,7 @@ impl WindowContentsState
 
         contents_paned.set_end_child(Some(&output_contents_box_sw));
 
-
+        //
 
         contents_box.append(&contents_paned);
 
@@ -336,7 +338,7 @@ impl WindowContentsState
 
         let weak_self = this.weak_self();
 
-        this.supported_type_sub_contents.supported_type_str_selected_event_sub_un_sub().subscribe(&weak_self, |_sender, parent|
+        this.supported_type_sub_contents.on_supported_type_str_selected().subscribe(&weak_self, |_sender, parent|
         {
 
             parent.text_output.buffer().set_text("");
@@ -424,7 +426,7 @@ impl WindowContentsState
                             this.mut_state.borrow_mut(|mut state|
                             {
 
-                                state.mapage_type = AllOrNot::All;
+                                state.all_or_not_mapage_type = AllOrNot::All;
 
                                 this.text_output.buffer().set_text("");
 
@@ -445,9 +447,57 @@ impl WindowContentsState
                                     this.mut_state.borrow_mut(|mut state|
                                     {
     
-                                        state.mapage_type = AllOrNot::NotAll(res);
+                                        state.all_or_not_mapage_type = AllOrNot::NotAll(res);
     
                                         this.text_output.buffer().set_text("");
+
+                                        match res
+                                        {
+
+                                            MapageType::SupportedType =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(true);
+
+                                            }
+                                            MapageType::Whatever =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            }
+                                            MapageType::TypeInstance =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            }
+                                            MapageType::Command =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            }
+                                            MapageType::CommandResult =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            }
+                                            MapageType::CommandError =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            }
+                                            MapageType::StreamedMessage =>
+                                            {
+
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            }
+
+                                        }
     
                                     })
     
@@ -639,7 +689,36 @@ impl WindowContentsState
                 this.mut_state.borrow(|state|
                 {
 
-                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, state.supported_type); //state.mapage_type,
+                    match state.all_or_not_mapage_type
+                    {
+
+                        AllOrNot::All =>
+                        {
+
+
+
+                        }
+                        AllOrNot::NotAll(mapage_type) =>
+                        {
+
+                            match mapage_type
+                            {
+
+                                MapageType::SupportedType => todo!(),
+                                MapageType::Whatever => todo!(),
+                                MapageType::TypeInstance => todo!(),
+                                MapageType::Command => todo!(),
+                                MapageType::CommandResult => todo!(),
+                                MapageType::CommandError => todo!(),
+                                MapageType::StreamedMessage => todo!(),
+                                
+                            }
+
+                        }
+
+                    }
+
+                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
 
                     let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
 
@@ -929,6 +1008,7 @@ impl WindowContentsState
 
     }
 
+    /*
     pub fn set_all_or_not_supported_type(&self, supported_type: AllOrNot<SupportedType>)
     {
 
@@ -942,6 +1022,7 @@ impl WindowContentsState
         self.text_output.buffer().set_text("");
 
     }
+    */
 
     pub fn output_error<E>(&self, error: E)
         where E: std::error::Error

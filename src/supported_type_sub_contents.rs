@@ -4,11 +4,11 @@ use gtk_estate::{adw::{glib::clone::Downgrade, prelude::{BoxExt, Cast, WidgetExt
 
 use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, WindowContentsState};
 
-use corlib::{events::SubUnSub, upgrading::try_up_rc};
+use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc};
 
 use corlib::events::SingleSubEvent; 
 
-use delegate::delegate;
+//use delegate::delegate;
 
 pub struct SupportedTypeSubContents
 {
@@ -16,7 +16,7 @@ pub struct SupportedTypeSubContents
     supported_type_strs_dropdown: DropDown,
     supported_type_box: Box,
     all_or_not_supported_type: Cell<AllOrNot<SupportedType>>, //all_or_not_supported_type_rc: Rc<Cell<AllOrNot<SupportedType>>>,
-    supported_type_str_selected_event: SingleSubEvent<Self, WindowContentsState>
+    on_supported_type_str_selected: SingleSubEvent<Self, WindowContentsState>
 
 }
 
@@ -52,14 +52,19 @@ impl SupportedTypeSubContents
 
         //let all_or_not_supported_type_weak = all_or_not_supported_type_rc.downgrade();
 
-        let this = Rc::new(Self
+        let this = Rc::new_cyclic(|weak_self|
         {
 
-            supported_type_strs_dropdown,
-            supported_type_box,
-            all_or_not_supported_type: Cell::new(AllOrNot::All),
-            supported_type_str_selected_event: SingleSubEvent::new()
+            Self
+            {
 
+                supported_type_strs_dropdown,
+                supported_type_box,
+                all_or_not_supported_type: Cell::new(AllOrNot::All),
+                on_supported_type_str_selected: SingleSubEvent::new(weak_self)
+
+            }
+        
         });
 
         let weak = this.downgrade();
@@ -83,6 +88,8 @@ impl SupportedTypeSubContents
 
                             this.all_or_not_supported_type.set(AllOrNot::All);
 
+                            this.on_supported_type_str_selected.raise();
+
                         }
                         else
                         {
@@ -97,7 +104,7 @@ impl SupportedTypeSubContents
 
                                     this.all_or_not_supported_type.set(AllOrNot::NotAll(res));
 
-                                    //n_supported_type_str_selected
+                                    this.on_supported_type_str_selected.raise();
     
                                 }
                                 Err(err) =>
@@ -139,12 +146,16 @@ impl SupportedTypeSubContents
 
     }
 
-    pub fn supported_type_str_selected_event_sub_un_sub<'a>(&'a self) -> SubUnSub<'a, Self, WindowContentsState>
+    impl_pub_single_sub_event_method!(on_supported_type_str_selected, WindowContentsState);
+
+    /*
+    pub fn on_supported_type_str_selected<'a>(&'a self) -> PubSingleSubEvent<'a, Self, WindowContentsState>
     {
 
-        self.supported_type_str_selected_event.get_sub_un_sub()
+        self.on_supported_type_str_selected.pub_this()
 
     }
+    */
 
     /*
     delegate!
