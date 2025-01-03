@@ -1,0 +1,35 @@
+[package]
+name = "mapage_types_viewer"
+version = "0.1.0-alpha"
+edition = "2021"
+
+[dependencies]
+gtk_estate = { path="../gtk_estate", features = ["gtk_v4_16", "adw_v1_6"] } #Do not remove
+#gtk_estate = { version = "0.3.0", features = ["adw", "gtk_v4_14"] }
+
+act_rs = { path="../act_rs", features = ["tokio"] } #Do not remove
+#act_rs = "0.1.0"
+
+corlib = { path="../corlib", features = ["serde"] } #Do not remove
+#corlib = "0.1.0"
+
+serde = { version = "1.0.215", features = ["derive"] }
+
+serde_json = "1.0.133"
+
+tokio = { version = "1.42.0", features = ["rt", "rt-multi-thread", "macros"] } #, "time", "io-util"
+
+libsync = { path="../libsync", features = ["std", "crossbeam", "tokio"] }
+
+strum = "0.26.3"
+
+strum_macros = "0.26.3"
+
+paste = "1.0.15"
+
+async-recursion = "1.1.1"
+
+delegate = "0.13.1"
+
+
+
