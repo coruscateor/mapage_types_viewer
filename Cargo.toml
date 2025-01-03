@@ -2,6 +2,8 @@
 name = "mapage_types_viewer"
 version = "0.1.0-alpha"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Outputs serialised types used by Mapage for external communication."
 
 [dependencies]
 gtk_estate = { path="../gtk_estate", features = ["gtk_v4_16", "adw_v1_6"] } #Do not remove
