@@ -1,11 +1,11 @@
 use std::fmt::{Debug, Display};
 
-use act_rs::{impl_default_start_and_end_async, impl_mac_task_actor};
+use act_rs::{impl_default_on_start_and_end_async, impl_mac_task_actor};
 
 use corlib::{inc_dec::IncDecSelf, text::SendableText, WorkInProgressResult};
 use paste::paste;
 
-use act_rs::{impl_default_end_async, impl_default_start_async}; //Remove impl_default_start_and_end_async macro dependancies.
+//use act_rs::{impl_default_end_async, impl_default_start_async}; //Remove impl_default_start_and_end_async macro dependancies.
 
 use serde::Serialize;
 use serde_json::{to_string, to_string_pretty, to_value, Value};
@@ -113,7 +113,7 @@ impl MapageTypeActorState
 
     }
 
-    impl_default_start_and_end_async!();
+    impl_default_on_start_and_end_async!();
 
     async fn run_async(&mut self) -> bool
     {

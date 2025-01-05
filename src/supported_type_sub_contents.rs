@@ -1,6 +1,6 @@
-use std::{cell::Cell, rc::{Rc, Weak}, str::FromStr};
+use std::{cell::Cell, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::clone::Downgrade, prelude::{BoxExt, Cast, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, StringObject}};
+use gtk_estate::{adw::{glib::clone::Downgrade, prelude::{BoxExt, Cast, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, Widget}};
 
 use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, WindowContentsState};
 
@@ -334,5 +334,24 @@ impl SupportedTypeSubContents
     */
 
 }
+
+//Add to GTK Estate
+
+/*
+impl Deref for SupportedTypeSubContents
+{
+
+    type Target = Widget;
+
+    fn deref(&self) -> &Self::Target
+    {
+
+        self.supported_type_box.upcast_ref::<Widget>()
+
+    }
+
+}
+*/
+
 
 

@@ -203,6 +203,8 @@ impl WindowContentsState
 
         let supported_type_sub_contents = SupportedTypeSubContents::new();
 
+        //input_contents_box.append(&supported_type_sub_contents);
+
         input_contents_box.append(supported_type_sub_contents.widget_ref());
 
         //SupportedType Variants
