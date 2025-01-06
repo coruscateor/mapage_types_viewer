@@ -4,7 +4,7 @@ use corlib::text::SendableText;
 
 use serde::{Deserialize, Serialize};
 
-use strum_macros::{AsRefStr, EnumCount, EnumIter, EnumString, FromRepr, IntoStaticStr}; //Display, 
+use strum_macros::{AsRefStr, EnumCount, EnumIter, EnumString, FromRepr, IntoStaticStr};
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
 pub enum SupportedType

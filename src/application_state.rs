@@ -99,22 +99,3 @@ impl ApplicationState
 
 impl_application_state_container_traits!();
 
-//impl_as_any_ref!(ApplicationState);
-
-//impl_as_any!(ApplicationState);
-
-//impl_application_state_container!(); //application_adapter);
-
-/*
-impl ApplicationStateContainer for ApplicationState
-{
-
-    fn dyn_adapter(&self) -> Rc<dyn gtk_estate::StoredApplicationObject>
-    {
-
-        self.app_ad.clone()
-
-    }
-
-}
-*/

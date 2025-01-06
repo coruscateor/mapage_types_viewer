@@ -948,10 +948,8 @@ fn parse_error_at_index<T>(index: usize, inner_message: String) -> Result<T, Str
 
 }
 
-fn parse_array<T>(value_input_string: String, vec: &mut Vec<T>) -> Result<(), String> //, E
+fn parse_array<T>(value_input_string: String, vec: &mut Vec<T>) -> Result<(), String>
     where T: FromStr,
-          //E: Display + ToString,
-          //T::Err: E,
           T::Err: Display + ToString
 {
 

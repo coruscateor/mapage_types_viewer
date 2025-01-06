@@ -33,10 +33,6 @@ fn main()
 
     let app = Application::builder().application_id("org.mapage_types_viewer").build();
     
-    //Initaslise the StateContainers object.
-
-    //StateContainers::init();
-
     ApplicationState::new(&app);
 
     app.run();

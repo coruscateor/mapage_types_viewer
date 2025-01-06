@@ -22,7 +22,7 @@ use async_recursion::async_recursion;
 pub enum MapageTypeActorInputMessage
 {
 
-    ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>) //AllOrNot<MapageType>, 
+    ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>)
 
 }
 
@@ -317,9 +317,7 @@ impl MapageTypeActorState
                         
                     }
 
-                } 
-
-                //self.send_not_done_sendable_text_string(string).await?;
+                }
 
                 self.send_not_done_sendable_text_str("])\n\n").await?;                        
 
@@ -436,8 +434,6 @@ impl MapageTypeActorState
 
                         self.send_not_done_4_newlines().await?;
 
-                        //return Ok(());
-
                     }
 
                 }
@@ -450,7 +446,7 @@ impl MapageTypeActorState
 
     }
 
-    //Process All Supported types or just one.
+    //Process All Supported Types or just one.
 
     async fn process_all_or_not_supported_type(&mut self, output_format: OutputFormat, all_or_not_supported_type: AllOrNot<SupportedType>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //bool
     {
@@ -466,146 +462,11 @@ impl MapageTypeActorState
 
                     self.process_supported_type(output_format, item).await?;
             
-                    /*
-                    //let str_value: &'static str = item.into();
-
-                    let str_value = SendableText::Str(item.into());
-
-                    self.send_not_done_sendable_text(str_value).await?;
-
-                    self.send_not_done_2_newlines().await?;
-
-                    //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(str_value))).await?;
-
-                    /*
-                    if let Err(err) = self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(str_value))).await
-                    {
-
-                        //let err_string = format!("{err}:?");
-
-                        //print!("{}", err_string);
-
-                        //print_display(err);
-
-                        //return false;
-
-                        return Err(err);
-
-                    }
-                    */
-
-                    let item_value_res = to_value(item);
-
-                    match item_value_res
-                    {
-
-                        Ok(res) =>
-                        {
-
-                            self.send_not_done_serde_json_value_enum_string_parts(res).await?;
-
-                            /*
-                            let res_string = SendableText::String(res.to_string());
-
-                            self.send_not_done_sendable_text(res_string).await?;
-
-                            self.send_not_done_2_newlines().await?;
-                            */
-
-                            //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(res_string))).await?;
-
-                            //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(SendableText::Str("\n\n")))).await?;
-
-                            /*
-                            if let Err(err) = self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(res_string))).await
-                            {
-
-                                //print_display(err);
-
-                                //return false;
-
-                                return Err(err);
-
-                            }
-                            */
-
-                        }
-                        Err(err) =>
-                        {
-
-                            let err_string = SendableText::String(err.to_string());
-
-                            self.send_not_done_sendable_text(err_string).await?;
-
-                            self.send_not_done_2_newlines().await?;
-
-                            //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::done(err_string))).await?;
-
-                            /*
-                            if let Err(err) = self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(err_string))).await
-                            {
-
-                                //print_display(err);
-
-                                //return false;
-
-                                return Err(err);
-
-                            }
-                            */
-
-                            return Ok(());
-
-                        }
-
-                    }
-
-                    let item_string_res = to_string_pretty(&item); //to_string(&item);
-
-                    match item_string_res
-                    {
-
-                        Ok(res) =>
-                        {
-
-                            let res_string = SendableText::String(res);
-
-                            self.send_not_done_sendable_text(res_string).await?;
-
-                            self.send_not_done_4_newlines().await?;
-
-                            //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(res_string))).await?;
-
-                            //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::not_done(SendableText::Str("\n\n")))).await?;
-
-                        }
-                        Err(err) =>
-                        {
-
-                            let err_string = SendableText::String(err.to_string());
-
-                            self.send_not_done_sendable_text(err_string).await?;
-
-                            self.send_not_done_4_newlines().await?;
-
-                            //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::done(err_string))).await?;
-
-                            return Ok(());
-
-                        }
-
-                    }
-                    */
-            
                 }
 
                 //Signal that the operation is complete
 
                 self.send_done_none().await?;
-
-                //self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::done_none())).await?;
-
-                //true
 
             }
             AllOrNot::NotAll(supported_type) =>
@@ -614,47 +475,6 @@ impl MapageTypeActorState
                 self.process_supported_type(output_format, supported_type).await?;
 
                 self.send_done_none().await?;
-
-                /*
-                todo!();
-
-                match supported_type
-                {
-
-                    SupportedType::Bool => todo!(),
-                    SupportedType::Char => todo!(),
-                    SupportedType::F32 => todo!(),
-                    SupportedType::F64 => todo!(),
-                    SupportedType::I8 => todo!(),
-                    SupportedType::I16 => todo!(),
-                    SupportedType::I32 => todo!(),
-                    SupportedType::I64 => todo!(),
-                    SupportedType::I128 => todo!(),
-                    SupportedType::U8 => todo!(),
-                    SupportedType::U16 => todo!(),
-                    SupportedType::U32 => todo!(),
-                    SupportedType::U64 => todo!(),
-                    SupportedType::U128 => todo!(),
-                    SupportedType::String => todo!(),
-                    SupportedType::Whatever => todo!(),
-                    SupportedType::VecBool => todo!(),
-                    SupportedType::VecF32 => todo!(),
-                    SupportedType::VecF64 => todo!(),
-                    SupportedType::VecI8 => todo!(),
-                    SupportedType::VecI16 => todo!(),
-                    SupportedType::VecI32 => todo!(),
-                    SupportedType::VecI64 => todo!(),
-                    SupportedType::VecI128 => todo!(),
-                    SupportedType::VecU8 => todo!(),
-                    SupportedType::VecU16 => todo!(),
-                    SupportedType::VecU32 => todo!(),
-                    SupportedType::VecU64 => todo!(),
-                    SupportedType::VecU128 => todo!(),
-
-                }
-                */
-
-                //true
 
             }
 
@@ -687,7 +507,7 @@ impl_mac_task_actor!(MapageTypeActor);
 //
 
 fn print_display<T>(debug_printable: T)
-    where T: Display //Debug +
+    where T: Display
 {
 
     let err_string = format!("{debug_printable}:?");
