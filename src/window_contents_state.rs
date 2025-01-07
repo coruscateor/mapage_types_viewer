@@ -235,7 +235,7 @@ impl WindowContentsState
 
         });
 
-        scs_add!(this);
+        //scs_add!(this);
 
         let weak_self = this.weak_self();
 
@@ -248,12 +248,16 @@ impl WindowContentsState
 
         //Signal connection
 
-        let weak_self_moved = weak_self.clone();
+        //let weak_self_moved = weak_self.clone();
+
+        let this_moved = this.clone(); 
 
         this.output_format_dropdown.connect_selected_notify(move |format_dropdown|
         {
 
-            try_up_rc(&weak_self_moved, |this|
+            //let this = this_moved;
+
+            //try_up_rc(&weak_self_moved, |this|
             {
 
                 if let Some(item) = format_dropdown.selected_item()
@@ -272,12 +276,12 @@ impl WindowContentsState
                             Ok(res) =>
                             {
 
-                                this.mut_state.borrow_mut(|mut state|
+                                this_moved.mut_state.borrow_mut(|mut state|
                                 {
 
                                     state.output_format = res;
 
-                                    this.text_output.buffer().set_text("");
+                                    this_moved.text_output.buffer().set_text("");
 
                                 })
 
@@ -285,7 +289,7 @@ impl WindowContentsState
                             Err(err) =>
                             {
 
-                                this.output_error(err);
+                                this_moved.output_error(err);
 
                             }
 
@@ -295,18 +299,20 @@ impl WindowContentsState
 
                 }
 
-            });
+            } //);
 
         });
 
         //
 
-        let weak_self_moved = weak_self.clone();
+        let this_moved = this.clone(); 
+
+        //let weak_self_moved = weak_self.clone();
 
         this.mapage_types_dropdown.connect_selected_notify(move |mapage_types_dropdown|
         {
 
-            try_up_rc(&weak_self_moved, |this|
+            //try_up_rc(&weak_self_moved, |this|
             {
 
                 if let Some(item) = mapage_types_dropdown.selected_item()
@@ -320,12 +326,12 @@ impl WindowContentsState
                         if item_string == "*"
                         {
 
-                            this.mut_state.borrow_mut(|mut state|
+                            this_moved.mut_state.borrow_mut(|mut state|
                             {
 
                                 state.all_or_not_mapage_type = AllOrNot::All;
 
-                                this.text_output.buffer().set_text("");
+                                this_moved.text_output.buffer().set_text("");
 
                             });
 
@@ -341,12 +347,12 @@ impl WindowContentsState
                                 Ok(res) =>
                                 {
     
-                                    this.mut_state.borrow_mut(|mut state|
+                                    this_moved.mut_state.borrow_mut(|mut state|
                                     {
     
                                         state.all_or_not_mapage_type = AllOrNot::NotAll(res);
     
-                                        this.text_output.buffer().set_text("");
+                                        this_moved.text_output.buffer().set_text("");
 
                                         match res
                                         {
@@ -354,43 +360,43 @@ impl WindowContentsState
                                             MapageType::SupportedType =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(true);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(true);
 
                                             }
                                             MapageType::Whatever =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::TypeInstance =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::Command =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::CommandResult =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::CommandError =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::StreamedMessage =>
                                             {
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
 
@@ -402,7 +408,7 @@ impl WindowContentsState
                                 Err(err) =>
                                 {
     
-                                    this.output_error(err);
+                                    this_moved.output_error(err);
     
                                 }
     
@@ -414,28 +420,30 @@ impl WindowContentsState
 
                 }
 
-            });
+            } //);
 
         });
 
         //
 
-        let weak_self_moved = weak_self.clone();
+        let this_moved = this.clone(); 
+
+        //let weak_self_moved = weak_self.clone();
 
         this.run_button.connect_clicked(move |run_button|
         {
 
-            try_up_rc(&weak_self_moved, |this|
+            //try_up_rc(&weak_self_moved, |this|
             {
 
-                if this.actor_poller.is_active()
+                if this_moved.actor_poller.is_active()
                 {
 
                     return;
 
                 }
 
-                this.mut_state.borrow(|state|
+                this_moved.mut_state.borrow(|state|
                 {
 
                     match state.all_or_not_mapage_type
@@ -467,24 +475,24 @@ impl WindowContentsState
 
                     }
 
-                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
+                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this_moved.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
 
-                    let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
+                    let try_send_res = this_moved.io_client.input_sender_ref().try_send(input_message);
 
                     if let Err(err) = try_send_res
                     {
 
-                        this.text_output.buffer().set_text(&err.to_string());
+                        this_moved.text_output.buffer().set_text(&err.to_string());
 
                     }
 
-                    this.actor_poller.start();
+                    this_moved.actor_poller.start();
 
                     run_button.set_sensitive(false);
                     
                 })
 
-            });
+            } //);
 
         });
 
