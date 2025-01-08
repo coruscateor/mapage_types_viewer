@@ -79,7 +79,11 @@ impl WhateverSubContents
 
         //let weak = this.downgrade();
 
-        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |whatever_strs_dropdown|
+        //clone!( #[strong] this,
+
+        let this2 = this.clone();
+
+        this.whatever_strs_dropdown.connect_selected_item_notify(move |whatever_strs_dropdown|
         {
 
             //try_up_rc(&weak, |this|
@@ -96,9 +100,9 @@ impl WhateverSubContents
                         if item_string == "*"
                         {
 
-                            this.all_or_not_whatever.set(AllOrNot::All);
+                            this2.all_or_not_whatever.set(AllOrNot::All);
 
-                            this.on_whatever_str_selected.raise();
+                            this2.on_whatever_str_selected.raise();
 
                             //this.
 
@@ -114,7 +118,7 @@ impl WhateverSubContents
                                 Ok(res) =>
                                 {
 
-                                    let value_input_string = get_text_view_string(&this.value_input);
+                                    let value_input_string = get_text_view_string(&this2.value_input);
 
                                     //this.all_or_not_whatever.set(AllOrNot::NotAll(res));
 
@@ -875,9 +879,9 @@ impl WhateverSubContents
                                         Ok(res) =>
                                         {
 
-                                            this.all_or_not_whatever.set(AllOrNot::NotAll(res));
+                                            this2.all_or_not_whatever.set(AllOrNot::NotAll(res));
 
-                                            this.on_whatever_str_selected.raise();
+                                            this2.on_whatever_str_selected.raise();
 
                                         }
                                         Err(error_message) =>
@@ -885,7 +889,7 @@ impl WhateverSubContents
 
                                             //Pass parameter by move.
 
-                                            this.on_value_input_parse_error.raise(&error_message);
+                                            this2.on_value_input_parse_error.raise(&error_message);
 
                                         }
 
@@ -913,8 +917,8 @@ impl WhateverSubContents
 
             //});
 
-        }));
-
+        });
+        
         this
 
     }

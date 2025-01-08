@@ -466,22 +466,22 @@ impl WindowContentsState
 
         //clone!(#[strong] this,
 
-        //let this2 = this.clone();
-
-        this.run_button.connect_clicked(clone!(#[strong] this, move |run_button|
+        let this2 = this.clone();
+        
+        this.run_button.connect_clicked(move |run_button|
         {
 
             //try_up_rc(&weak_self_moved, |this|
             //{
 
-                if this.actor_poller.is_active()
+                if this2.actor_poller.is_active()
                 {
 
                     return;
 
                 }
 
-                this.mut_state.borrow(|state|
+                this2.mut_state.borrow(|state|
                 {
 
                     match state.all_or_not_mapage_type
@@ -513,18 +513,18 @@ impl WindowContentsState
 
                     }
 
-                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
+                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this2.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
 
-                    let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
+                    let try_send_res = this2.io_client.input_sender_ref().try_send(input_message);
 
                     if let Err(err) = try_send_res
                     {
 
-                        this.text_output.buffer().set_text(&err.to_string());
+                        this2.text_output.buffer().set_text(&err.to_string());
 
                     }
 
-                    this.actor_poller.start();
+                    this2.actor_poller.start();
 
                     run_button.set_sensitive(false);
                     
@@ -532,7 +532,7 @@ impl WindowContentsState
 
             //} //);
 
-        }));
+        });
 
         this.actor_poller.set_on_time_out_fn(|sto|
         {
