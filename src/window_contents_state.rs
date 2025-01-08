@@ -14,7 +14,14 @@ use corlib::upgrading::{try_up_rc, try_up_rc_pt, up_rc, up_rc_pt};
 use corlib::NonOption;
 
 use gtk_estate::adw::gdk::Display;
-use gtk_estate::adw::glib::clone;
+
+//use gtk_estate::adw::glib::{self, clone};
+
+//use gtk_estate::adw::glib;
+
+//use gtk_estate::adw::glib_macros::clone;
+
+//use gtk_estate::adw::glib::macros;
 
 use gtk_estate::adw::prelude::{BoxExt, ButtonExt, Cast, ObjectExt, WidgetExt};
 
@@ -28,7 +35,8 @@ use gtk_estate::{impl_weak_self_methods, scs_add, RcWidgetAdapter, StateContaine
 
 use gtk_estate::gtk4::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
 
-use gtk_estate::gtk4::glib;
+use gtk_estate::gtk4::glib::clone;
+
 use libsync::crossbeam::mpmc::tokio::array_queue::io_channels::IOClient;
 use serde::ser::Error;
 use serde_json::to_string_pretty;
@@ -40,6 +48,12 @@ use crate::{AllOrNot, ApplicationState, SupportedType, SupportedTypeSubContents}
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
 use corlib::cell::RefCellStore;
+
+//use gtk::glib;
+
+//rust-analyzer version: 0.3.2249-standalone
+
+//When using glib clone!( #[strong] this,... old error underlines don't get removed. 
 
 struct WindowContentsMutState
 {
@@ -78,7 +92,8 @@ pub struct WindowContentsState
     actor_poller: RcSimpleTimeOut<Weak<WindowContentsState>>,
     output_format_dropdown: DropDown,
     run_button: Button,
-    supported_type_sub_contents: Rc<SupportedTypeSubContents>
+    supported_type_sub_contents: Rc<SupportedTypeSubContents>,
+    new_window_button: Button
 
 }
 
@@ -99,6 +114,14 @@ impl WindowContentsState
         let hb = HeaderBar::builder().title_widget(&window_title).build();
 
         contents_box.append(&hb);
+
+        //New Window
+
+        let new_window_button = Button::builder().label("New Window").build();
+
+        contents_box.append(&new_window_button);
+
+        //
 
         let tool_cb = CenterBox::new();
 
@@ -229,7 +252,8 @@ impl WindowContentsState
                 actor_poller: SimpleTimeOut::with_state_ref(actor_poller_duration, weak_self),
                 output_format_dropdown,
                 run_button,
-                supported_type_sub_contents
+                supported_type_sub_contents,
+                new_window_button
 
             }
 
@@ -246,11 +270,17 @@ impl WindowContentsState
 
         });
 
-        //Signal connection
+        //Signal connections
+
+        //this.
 
         //let weak_self_moved = weak_self.clone();
 
-        let this_moved = this.clone(); 
+        //let this_moved = this.clone();
+
+        let this2 = this.clone();
+
+        //clone!( #[strong] this,
 
         this.output_format_dropdown.connect_selected_notify(move |format_dropdown|
         {
@@ -258,40 +288,38 @@ impl WindowContentsState
             //let this = this_moved;
 
             //try_up_rc(&weak_self_moved, |this|
+            //
+
+            if let Some(item) = format_dropdown.selected_item()
             {
 
-                if let Some(item) = format_dropdown.selected_item()
+                if let Some(item) = item.downcast_ref::<StringObject>()
                 {
 
-                    if let Some(item) = item.downcast_ref::<StringObject>()
+                    let item_string = item.string();
+
+                    let from_str_res = OutputFormat::from_str(&item_string);
+
+                    match from_str_res
                     {
 
-                        let item_string = item.string();
-
-                        let from_str_res = OutputFormat::from_str(&item_string);
-
-                        match from_str_res
+                        Ok(res) =>
                         {
 
-                            Ok(res) =>
+                            this2.mut_state.borrow_mut(|mut state|
                             {
 
-                                this_moved.mut_state.borrow_mut(|mut state|
-                                {
+                                state.output_format = res;
 
-                                    state.output_format = res;
+                                this2.text_output.buffer().set_text("");
 
-                                    this_moved.text_output.buffer().set_text("");
+                            })
 
-                                })
+                        }
+                        Err(err) =>
+                        {
 
-                            }
-                            Err(err) =>
-                            {
-
-                                this_moved.output_error(err);
-
-                            }
+                            this2.output_error(err);
 
                         }
 
@@ -299,21 +327,27 @@ impl WindowContentsState
 
                 }
 
-            } //);
+            }
+
+            //} //);
 
         });
 
         //
 
-        let this_moved = this.clone(); 
+        //let this_moved = this.clone(); 
 
         //let weak_self_moved = weak_self.clone();
 
-        this.mapage_types_dropdown.connect_selected_notify(move |mapage_types_dropdown|
+        //clone!( #[strong] this, 
+
+        //let this2 = this.clone();
+
+        this.mapage_types_dropdown.connect_selected_notify(clone!( #[strong] this, move |mapage_types_dropdown|
         {
 
             //try_up_rc(&weak_self_moved, |this|
-            {
+            //{
 
                 if let Some(item) = mapage_types_dropdown.selected_item()
                 {
@@ -326,12 +360,12 @@ impl WindowContentsState
                         if item_string == "*"
                         {
 
-                            this_moved.mut_state.borrow_mut(|mut state|
+                            this.mut_state.borrow_mut(|mut state|
                             {
 
                                 state.all_or_not_mapage_type = AllOrNot::All;
 
-                                this_moved.text_output.buffer().set_text("");
+                                this.text_output.buffer().set_text("");
 
                             });
 
@@ -347,12 +381,12 @@ impl WindowContentsState
                                 Ok(res) =>
                                 {
     
-                                    this_moved.mut_state.borrow_mut(|mut state|
+                                    this.mut_state.borrow_mut(|mut state|
                                     {
     
                                         state.all_or_not_mapage_type = AllOrNot::NotAll(res);
     
-                                        this_moved.text_output.buffer().set_text("");
+                                        this.text_output.buffer().set_text("");
 
                                         match res
                                         {
@@ -360,43 +394,43 @@ impl WindowContentsState
                                             MapageType::SupportedType =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(true);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(true);
 
                                             }
                                             MapageType::Whatever =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::TypeInstance =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::Command =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::CommandResult =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::CommandError =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::StreamedMessage =>
                                             {
 
-                                                this_moved.supported_type_sub_contents.widget_ref().set_visible(false);
+                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                             }
 
@@ -408,7 +442,7 @@ impl WindowContentsState
                                 Err(err) =>
                                 {
     
-                                    this_moved.output_error(err);
+                                    this.output_error(err);
     
                                 }
     
@@ -420,30 +454,34 @@ impl WindowContentsState
 
                 }
 
-            } //);
+            //} //);
 
-        });
+        }));
 
         //
 
-        let this_moved = this.clone(); 
+        //let this_moved = this.clone(); 
 
         //let weak_self_moved = weak_self.clone();
 
-        this.run_button.connect_clicked(move |run_button|
+        //clone!(#[strong] this,
+
+        //let this2 = this.clone();
+
+        this.run_button.connect_clicked(clone!(#[strong] this, move |run_button|
         {
 
             //try_up_rc(&weak_self_moved, |this|
-            {
+            //{
 
-                if this_moved.actor_poller.is_active()
+                if this.actor_poller.is_active()
                 {
 
                     return;
 
                 }
 
-                this_moved.mut_state.borrow(|state|
+                this.mut_state.borrow(|state|
                 {
 
                     match state.all_or_not_mapage_type
@@ -475,26 +513,26 @@ impl WindowContentsState
 
                     }
 
-                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this_moved.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
+                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
 
-                    let try_send_res = this_moved.io_client.input_sender_ref().try_send(input_message);
+                    let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
 
                     if let Err(err) = try_send_res
                     {
 
-                        this_moved.text_output.buffer().set_text(&err.to_string());
+                        this.text_output.buffer().set_text(&err.to_string());
 
                     }
 
-                    this_moved.actor_poller.start();
+                    this.actor_poller.start();
 
                     run_button.set_sensitive(false);
                     
                 })
 
-            } //);
+            //} //);
 
-        });
+        }));
 
         this.actor_poller.set_on_time_out_fn(|sto|
         {

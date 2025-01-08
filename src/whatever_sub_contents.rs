@@ -10,6 +10,8 @@ use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent};
 
 use gtk_estate::helpers::text_view::get_text_view_string;
 
+use gtk_estate::gtk4::glib::clone;
+
 pub struct WhateverSubContents
 {
 
@@ -75,13 +77,13 @@ impl WhateverSubContents
         
         });
 
-        let weak = this.downgrade();
+        //let weak = this.downgrade();
 
-        this.whatever_strs_dropdown.connect_selected_item_notify(move |whatever_strs_dropdown|
+        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |whatever_strs_dropdown|
         {
 
-            try_up_rc(&weak, |this|
-            {
+            //try_up_rc(&weak, |this|
+            //{
 
                 if let Some(item) = whatever_strs_dropdown.selected_item()
                 {
@@ -97,6 +99,8 @@ impl WhateverSubContents
                             this.all_or_not_whatever.set(AllOrNot::All);
 
                             this.on_whatever_str_selected.raise();
+
+                            //this.
 
                         }
                         else
@@ -907,9 +911,9 @@ impl WhateverSubContents
 
                 }
 
-            });
+            //});
 
-        });
+        }));
 
         this
 
