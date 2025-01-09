@@ -9,6 +9,7 @@ use std::time::Duration;
 use act_rs::enter;
 use corlib::cell::borrow_mut;
 
+use corlib::inc_dec::IncDecSelf;
 use corlib::upgrading::{try_up_rc, try_up_rc_pt, up_rc, up_rc_pt};
 
 use corlib::NonOption;
@@ -38,12 +39,13 @@ use gtk_estate::gtk4::{Box, Button, CenterBox, DropDown, Orientation, Paned, Scr
 use gtk_estate::gtk4::glib::clone;
 
 use libsync::crossbeam::mpmc::tokio::array_queue::io_channels::IOClient;
+use libsync::BoundedSendError;
 use serde::ser::Error;
 use serde_json::to_string_pretty;
 
 use crate::actors::{MapageTypeActorInputMessage, MapageTypeActorOutputMessage, MapageTypeActorState};
 
-use crate::{AllOrNot, ApplicationState, SupportedType, SupportedTypeSubContents};
+use crate::{AllOrNot, ApplicationState, SupportedType, SupportedTypeSubContents, WhateverSubContents};
 
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
@@ -93,7 +95,8 @@ pub struct WindowContentsState
     output_format_dropdown: DropDown,
     run_button: Button,
     supported_type_sub_contents: Rc<SupportedTypeSubContents>,
-    new_window_button: Button
+    new_window_button: Button,
+    whatever_sub_contents: Rc<WhateverSubContents>
 
 }
 
@@ -193,6 +196,14 @@ impl WindowContentsState
 
         input_contents_box.append(supported_type_sub_contents.widget_ref());
 
+        //Whatever
+
+        let whatever_sub_contents = WhateverSubContents::new();
+
+        input_contents_box.append(whatever_sub_contents.widget_ref());
+
+        //
+
         let input_contents_box_sw = ScrolledWindow::builder().child(&input_contents_box).build();
 
         contents_paned.set_start_child(Some(&input_contents_box_sw));
@@ -214,6 +225,8 @@ impl WindowContentsState
         //
 
         contents_box.append(&contents_paned);
+
+        //Tokio
 
         let scs = StateContainers::get();
 
@@ -253,7 +266,8 @@ impl WindowContentsState
                 output_format_dropdown,
                 run_button,
                 supported_type_sub_contents,
-                new_window_button
+                new_window_button,
+                whatever_sub_contents
 
             }
 
@@ -262,6 +276,24 @@ impl WindowContentsState
         //scs_add!(this);
 
         let weak_self = this.weak_self();
+
+        //whatever_sub_contents
+
+        this.whatever_sub_contents.on_whatever_str_selected().subscribe(&weak_self, |_sender, parent|
+        {
+
+            parent.text_output.buffer().set_text("");
+
+        });
+
+        this.whatever_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, event_arg, parent|
+        {
+
+            parent.text_output.buffer().set_text(event_arg);
+
+        });
+
+        //supported_type_sub_contents.
 
         this.supported_type_sub_contents.on_supported_type_str_selected().subscribe(&weak_self, |_sender, parent|
         {
@@ -278,11 +310,11 @@ impl WindowContentsState
 
         //let this_moved = this.clone();
 
-        let this2 = this.clone();
+        //let this2 = this.clone();
 
         //clone!( #[strong] this,
 
-        this.output_format_dropdown.connect_selected_notify(move |format_dropdown|
+        this.output_format_dropdown.connect_selected_notify(clone!( #[strong] this, move |format_dropdown|
         {
 
             //let this = this_moved;
@@ -306,12 +338,12 @@ impl WindowContentsState
                         Ok(res) =>
                         {
 
-                            this2.mut_state.borrow_mut(|mut state|
+                            this.mut_state.borrow_mut(|mut state|
                             {
 
                                 state.output_format = res;
 
-                                this2.text_output.buffer().set_text("");
+                                this.text_output.buffer().set_text("");
 
                             })
 
@@ -319,7 +351,7 @@ impl WindowContentsState
                         Err(err) =>
                         {
 
-                            this2.output_error(err);
+                            this.output_error(err);
 
                         }
 
@@ -331,7 +363,7 @@ impl WindowContentsState
 
             //} //);
 
-        });
+        }));
 
         //
 
@@ -396,11 +428,15 @@ impl WindowContentsState
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(true);
 
+                                                this.whatever_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::Whatever =>
                                             {
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                                this.whatever_sub_contents.widget_ref().set_visible(true);
 
                                             }
                                             MapageType::TypeInstance =>
@@ -408,11 +444,15 @@ impl WindowContentsState
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
 
+                                                this.whatever_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::Command =>
                                             {
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                                this.whatever_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::CommandResult =>
@@ -420,17 +460,23 @@ impl WindowContentsState
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
 
+                                                this.whatever_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::CommandError =>
                                             {
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
 
+                                                this.whatever_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::StreamedMessage =>
                                             {
 
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                                this.whatever_sub_contents.widget_ref().set_visible(false);
 
                                             }
 
@@ -466,22 +512,26 @@ impl WindowContentsState
 
         //clone!(#[strong] this,
 
-        let this2 = this.clone();
+        //let this2 = this.clone();
         
-        this.run_button.connect_clicked(move |run_button|
+        this.run_button.connect_clicked(clone!( #[strong] this, move |run_button|
         {
 
             //try_up_rc(&weak_self_moved, |this|
             //{
 
-                if this2.actor_poller.is_active()
+                if this.actor_poller.is_active()
                 {
 
                     return;
 
                 }
 
-                this2.mut_state.borrow(|state|
+                //let try_send_res;
+
+                let mut sent_messages_count = 0;
+
+                this.mut_state.borrow(|state|
                 {
 
                     match state.all_or_not_mapage_type
@@ -490,6 +540,13 @@ impl WindowContentsState
                         AllOrNot::All =>
                         {
 
+                            this.output_when_error(this.send_process_supported_type_message(&state));
+
+                            sent_messages_count.pp();
+
+                            this.output_when_error(this.send_process_whatever_message(&state));
+
+                            sent_messages_count.pp();
 
 
                         }
@@ -499,8 +556,22 @@ impl WindowContentsState
                             match mapage_type
                             {
 
-                                MapageType::SupportedType => todo!(),
-                                MapageType::Whatever => todo!(),
+                                MapageType::SupportedType =>
+                                {
+
+                                    this.output_when_error(this.send_process_supported_type_message(&state));
+
+                                    sent_messages_count.pp();
+
+                                }
+                                MapageType::Whatever =>
+                                {
+
+                                    this.output_when_error(this.send_process_whatever_message(&state));
+
+                                    sent_messages_count.pp();
+
+                                }
                                 MapageType::TypeInstance => todo!(),
                                 MapageType::Command => todo!(),
                                 MapageType::CommandResult => todo!(),
@@ -513,26 +584,33 @@ impl WindowContentsState
 
                     }
 
-                    let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this2.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
+                    //let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
 
-                    let try_send_res = this2.io_client.input_sender_ref().try_send(input_message);
+                    //let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
 
+                    /*
                     if let Err(err) = try_send_res
                     {
 
-                        this2.text_output.buffer().set_text(&err.to_string());
+                        this.text_output.buffer().set_text(&err.to_string());
 
                     }
+                    */
 
-                    this2.actor_poller.start();
+                    if sent_messages_count > 0
+                    {
 
-                    run_button.set_sensitive(false);
+                        this.actor_poller.start();
+
+                        run_button.set_sensitive(false);
+
+                    }
                     
                 })
 
             //} //);
 
-        });
+        }));
 
         this.actor_poller.set_on_time_out_fn(|sto|
         {
@@ -604,6 +682,45 @@ impl WindowContentsState
 
     impl_weak_self_methods!(widget_adapter);
 
+    pub fn output_error<E>(&self, error: E)
+        where E: std::error::Error
+    {
+
+        self.text_output.buffer().set_text(&error.to_string());
+
+    }
+
+    pub fn output_when_error(&self, result: Result<(), BoundedSendError<MapageTypeActorInputMessage>>)
+    {
+
+        if let Err(err) = result
+        {
+
+            self.text_output.buffer().set_text(&err.to_string());
+
+        }
+
+    }
+
+    pub fn send_process_supported_type_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, self.supported_type_sub_contents.all_or_not_supported_type());
+
+        self.io_client.input_sender_ref().try_send(input_message)
+
+    }
+
+    pub fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        let input_message = MapageTypeActorInputMessage::ProcessWhatever(state.output_format, self.whatever_sub_contents.all_or_not_whatever());
+
+        self.io_client.input_sender_ref().try_send(input_message)
+
+    }
+
+    /*
     fn output_todo(&self)
     {
 
@@ -617,15 +734,9 @@ impl WindowContentsState
         self.text_output.buffer().set_text("Error: Unrecognised Selection Error");
 
     }
+    */
 
-    pub fn output_error<E>(&self, error: E)
-        where E: std::error::Error
-    {
-
-        self.text_output.buffer().set_text(&error.to_string());
-
-    }
-
+    /*
     pub fn show_supported_type_widget(&self)
     {
 
@@ -674,7 +785,8 @@ impl WindowContentsState
 
 
     }
-
+    */
+    
 }
 
 impl_widget_state_container_traits!(Box, WindowContentsState);

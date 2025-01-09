@@ -1,10 +1,10 @@
 use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, IsA, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, TextView, Widget}};
+use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, TextView, Widget}};
 
 use crate::{widgets::{new_whatever_strs_dropdown}, AllOrNot, Whatever, WindowContentsState};
 
-use corlib::{events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
+use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
 
 use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent}; 
 
@@ -17,7 +17,7 @@ pub struct WhateverSubContents
 
     whatever_strs_dropdown: DropDown,
     whatever_box: Box,
-    all_or_not_whatever: Cell<AllOrNot<Whatever>>,
+    all_or_not_whatever: RefCellStore<AllOrNot<Whatever>>,
     on_whatever_str_selected: SingleSubEvent<Self, WindowContentsState>,
     value_input: TextView,
     on_value_input_parse_error: SingleSubArgsEvent<Self, String, WindowContentsState>
@@ -68,7 +68,7 @@ impl WhateverSubContents
 
                 whatever_strs_dropdown,
                 whatever_box,
-                all_or_not_whatever: Cell::new(AllOrNot::All),
+                all_or_not_whatever: RefCellStore::new(AllOrNot::All),
                 on_whatever_str_selected: SingleSubEvent::new(weak_self),
                 value_input,
                 on_value_input_parse_error: SingleSubArgsEvent::new(weak_self),
@@ -81,9 +81,9 @@ impl WhateverSubContents
 
         //clone!( #[strong] this,
 
-        let this2 = this.clone();
+        //let this2 = this.clone();
 
-        this.whatever_strs_dropdown.connect_selected_item_notify(move |whatever_strs_dropdown|
+        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |whatever_strs_dropdown|
         {
 
             //try_up_rc(&weak, |this|
@@ -100,9 +100,11 @@ impl WhateverSubContents
                         if item_string == "*"
                         {
 
-                            this2.all_or_not_whatever.set(AllOrNot::All);
+                            this.all_or_not_whatever.set(AllOrNot::All);
 
-                            this2.on_whatever_str_selected.raise();
+                            //this.all_or_not_whatever.borrow_mut(|state| { *state = AllOrNot::All; } ); //.set(AllOrNot::All);
+
+                            this.on_whatever_str_selected.raise();
 
                             //this.
 
@@ -118,7 +120,17 @@ impl WhateverSubContents
                                 Ok(res) =>
                                 {
 
-                                    let value_input_string = get_text_view_string(&this2.value_input);
+                                    let buffer = this.value_input.buffer();
+
+                                    let start = buffer.start_iter();
+
+                                    let end = buffer.end_iter();
+
+                                    let buffer_text = buffer.text(&start, &end, false);
+
+                                    let value_input_str = buffer_text.as_str();
+
+                                    //let value_input_string = get_text_view_string(&this.value_input);
 
                                     //this.all_or_not_whatever.set(AllOrNot::NotAll(res));
 
@@ -128,10 +140,11 @@ impl WhateverSubContents
 
                                     match res
                                     {
+
                                         Whatever::Bool(_) =>
                                         {
 
-                                            let res = bool::from_str(&value_input_string);
+                                            let res = bool::from_str(value_input_str);
 
                                             match res
                                             {
@@ -161,7 +174,7 @@ impl WhateverSubContents
                                         Whatever::Char(_) =>
                                         {
 
-                                            let res = char::from_str(&value_input_string);
+                                            let res = char::from_str(value_input_str);
 
                                             match res
                                             {
@@ -185,7 +198,7 @@ impl WhateverSubContents
                                         Whatever::F32(_) =>
                                         {
 
-                                            let res = f32::from_str(&value_input_string);
+                                            let res = f32::from_str(value_input_str);
 
                                             match res
                                             {
@@ -209,7 +222,7 @@ impl WhateverSubContents
                                         Whatever::F64(_) =>
                                         {
 
-                                            let res = f64::from_str(&value_input_string);
+                                            let res = f64::from_str(value_input_str);
 
                                             match res
                                             {
@@ -233,7 +246,7 @@ impl WhateverSubContents
                                         Whatever::I8(_) =>
                                         {
 
-                                            let res = i8::from_str(&value_input_string);
+                                            let res = i8::from_str(value_input_str);
 
                                             match res
                                             {
@@ -257,7 +270,7 @@ impl WhateverSubContents
                                         Whatever::I16(_) =>
                                         {
 
-                                            let res = i16::from_str(&value_input_string);
+                                            let res = i16::from_str(value_input_str);
 
                                             match res
                                             {
@@ -281,7 +294,7 @@ impl WhateverSubContents
                                         Whatever::I32(_) =>
                                         {
 
-                                            let res = i32::from_str(&value_input_string);
+                                            let res = i32::from_str(value_input_str);
 
                                             match res
                                             {
@@ -305,7 +318,7 @@ impl WhateverSubContents
                                         Whatever::I64(_) =>
                                         {
 
-                                            let res = i64::from_str(&value_input_string);
+                                            let res = i64::from_str(value_input_str);
 
                                             match res
                                             {
@@ -329,7 +342,7 @@ impl WhateverSubContents
                                         Whatever::I128(_) =>
                                         {
 
-                                            let res = i128::from_str(&value_input_string);
+                                            let res = i128::from_str(value_input_str);
 
                                             match res
                                             {
@@ -353,7 +366,7 @@ impl WhateverSubContents
                                         Whatever::U8(_) =>
                                         {
 
-                                            let res = u8::from_str(&value_input_string);
+                                            let res = u8::from_str(value_input_str);
 
                                             match res
                                             {
@@ -377,7 +390,7 @@ impl WhateverSubContents
                                         Whatever::U16(_) =>
                                         {
 
-                                            let res = u16::from_str(&value_input_string);
+                                            let res = u16::from_str(value_input_str);
 
                                             match res
                                             {
@@ -401,7 +414,7 @@ impl WhateverSubContents
                                         Whatever::U32(_) =>
                                         {
 
-                                            let res = u32::from_str(&value_input_string);
+                                            let res = u32::from_str(value_input_str);
 
                                             match res
                                             {
@@ -425,7 +438,7 @@ impl WhateverSubContents
                                         Whatever::U64(_) =>
                                         {
 
-                                            let res = u64::from_str(&value_input_string);
+                                            let res = u64::from_str(value_input_str);
 
                                             match res
                                             {
@@ -449,7 +462,7 @@ impl WhateverSubContents
                                         Whatever::U128(_) =>
                                         {
 
-                                            let res = u128::from_str(&value_input_string);
+                                            let res = u128::from_str(value_input_str);
 
                                             match res
                                             {
@@ -473,13 +486,13 @@ impl WhateverSubContents
                                         Whatever::String(_) =>
                                         {
 
-                                            the_res = Ok(Whatever::String(value_input_string));
+                                            the_res = Ok(Whatever::String(value_input_str.to_string()));
 
                                         }
                                         Whatever::VecBool(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -544,7 +557,7 @@ impl WhateverSubContents
                                         Whatever::VecF32(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -609,7 +622,7 @@ impl WhateverSubContents
                                         Whatever::VecF64(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -633,7 +646,7 @@ impl WhateverSubContents
                                         Whatever::VecI8(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -657,7 +670,7 @@ impl WhateverSubContents
                                         Whatever::VecI16(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -681,7 +694,7 @@ impl WhateverSubContents
                                         Whatever::VecI32(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -705,7 +718,7 @@ impl WhateverSubContents
                                         Whatever::VecI64(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -729,7 +742,7 @@ impl WhateverSubContents
                                         Whatever::VecI128(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -753,7 +766,7 @@ impl WhateverSubContents
                                         Whatever::VecU8(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -777,7 +790,7 @@ impl WhateverSubContents
                                         Whatever::VecU16(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -801,7 +814,7 @@ impl WhateverSubContents
                                         Whatever::VecU32(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -825,7 +838,7 @@ impl WhateverSubContents
                                         Whatever::VecU64(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -849,7 +862,7 @@ impl WhateverSubContents
                                         Whatever::VecU128(mut vec) =>
                                         {
 
-                                            let res = parse_array(value_input_string, &mut vec);
+                                            let res = parse_array(value_input_str, &mut vec);
 
                                             match res
                                             {
@@ -879,9 +892,9 @@ impl WhateverSubContents
                                         Ok(res) =>
                                         {
 
-                                            this2.all_or_not_whatever.set(AllOrNot::NotAll(res));
+                                            this.all_or_not_whatever.set(AllOrNot::NotAll(res));
 
-                                            this2.on_whatever_str_selected.raise();
+                                            this.on_whatever_str_selected.raise();
 
                                         }
                                         Err(error_message) =>
@@ -889,7 +902,7 @@ impl WhateverSubContents
 
                                             //Pass parameter by move.
 
-                                            this2.on_value_input_parse_error.raise(&error_message);
+                                            this.on_value_input_parse_error.raise(&error_message);
 
                                         }
 
@@ -917,7 +930,7 @@ impl WhateverSubContents
 
             //});
 
-        });
+        }));
         
         this
 
@@ -947,6 +960,13 @@ impl WhateverSubContents
 
     }
 
+    pub fn all_or_not_whatever(&self) -> AllOrNot<Whatever>
+    {
+
+        self.all_or_not_whatever.get()
+
+    }
+
 }
 
 fn parse_error_at_index<T>(index: usize, inner_message: String) -> Result<T, String>
@@ -956,7 +976,7 @@ fn parse_error_at_index<T>(index: usize, inner_message: String) -> Result<T, Str
 
 }
 
-fn parse_array<T>(value_input_string: String, vec: &mut Vec<T>) -> Result<(), String>
+fn parse_array<T>(value_input_str: &str, vec: &mut Vec<T>) -> Result<(), String>
     where T: FromStr,
           T::Err: Display + ToString
 {
@@ -964,7 +984,7 @@ fn parse_array<T>(value_input_string: String, vec: &mut Vec<T>) -> Result<(), St
 
     let mut index: usize = 0;
 
-    let split_value_input = value_input_string.split(',');
+    let split_value_input = value_input_str.split(',');
 
     for item in split_value_input
     {

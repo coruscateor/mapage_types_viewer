@@ -22,7 +22,8 @@ use async_recursion::async_recursion;
 pub enum MapageTypeActorInputMessage
 {
 
-    ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>)
+    ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>),
+    ProcessWhatever(OutputFormat, AllOrNot<Whatever>)
 
 }
 
@@ -39,6 +40,12 @@ impl Display for MapageTypeActorInputMessage
             {
                 
                 write!(f, "ProcessSupportedType({output_format:?}, {all_or_not_supported_type:?})")
+
+            }
+            MapageTypeActorInputMessage::ProcessWhatever(output_format, all_or_not_supported_type) =>
+            {
+
+                write!(f, "ProcessProcessWhatever({output_format:?}, {all_or_not_supported_type:?})")
 
             }
 
@@ -130,6 +137,12 @@ impl MapageTypeActorState
                 {
 
                     processing_res = self.process_all_or_not_supported_type(output_format, all_or_not_supported_type).await;
+
+                }
+                MapageTypeActorInputMessage::ProcessWhatever(output_format, all_or_not_whatever) =>
+                {
+
+                    processing_res = self.process_all_or_not_whatever(output_format, all_or_not_whatever).await;
 
                 }
 
