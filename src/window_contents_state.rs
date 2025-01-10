@@ -635,6 +635,10 @@ impl WindowContentsState
                                 if let Some(res) = work_in_progress_result.result()
                                 {
 
+                                    print!("received:\n\n");
+
+                                    print!("{}", res);
+
                                     let mut end_iter = this.text_output.buffer().end_iter();
 
                                     this.text_output.buffer().insert(&mut end_iter, res);
