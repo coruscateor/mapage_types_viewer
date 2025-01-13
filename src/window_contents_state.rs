@@ -279,26 +279,30 @@ impl WindowContentsState
 
         //whatever_sub_contents
 
-        this.whatever_sub_contents.on_whatever_str_selected().subscribe(&weak_self, |_sender, parent|
+        this.whatever_sub_contents.on_whatever_str_selected().subscribe(&weak_self, |_sender, this|
         {
 
-            parent.text_output.buffer().set_text("");
+            this.clear_text_output();
+
+            //parent.text_output.buffer().set_text("");
 
         });
 
-        this.whatever_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, event_arg, parent|
+        this.whatever_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, event_arg, this|
         {
 
-            parent.text_output.buffer().set_text(event_arg);
+            this.text_output.buffer().set_text(event_arg);
 
         });
 
         //supported_type_sub_contents.
 
-        this.supported_type_sub_contents.on_supported_type_str_selected().subscribe(&weak_self, |_sender, parent|
+        this.supported_type_sub_contents.on_supported_type_str_selected().subscribe(&weak_self, |_sender, this|
         {
 
-            parent.text_output.buffer().set_text("");
+            this.clear_text_output();
+
+            //parent.text_output.buffer().set_text("");
 
         });
 
@@ -343,7 +347,9 @@ impl WindowContentsState
 
                                 state.output_format = res;
 
-                                this.text_output.buffer().set_text("");
+                                //this.text_output.buffer().set_text("");
+
+                                this.clear_text_output();
 
                             })
 
@@ -397,7 +403,9 @@ impl WindowContentsState
 
                                 state.all_or_not_mapage_type = AllOrNot::All;
 
-                                this.text_output.buffer().set_text("");
+                                //this.text_output.buffer().set_text("");
+
+                                this.clear_text_output();
 
                             });
 
@@ -418,7 +426,9 @@ impl WindowContentsState
     
                                         state.all_or_not_mapage_type = AllOrNot::NotAll(res);
     
-                                        this.text_output.buffer().set_text("");
+                                        //this.text_output.buffer().set_text("");
+
+                                        this.clear_text_output();
 
                                         match res
                                         {
@@ -529,7 +539,7 @@ impl WindowContentsState
 
                 //let try_send_res;
 
-                let mut sent_messages_count = 0;
+                //let mut sent_messages_count = 0;
 
                 this.mut_state.borrow(|state|
                 {
@@ -540,14 +550,15 @@ impl WindowContentsState
                         AllOrNot::All =>
                         {
 
-                            this.output_when_error(this.send_process_supported_type_message(&state));
+                            this.output_when_error(this.send_process_all_message(&state));
 
-                            sent_messages_count.pp();
+                            //this.output_when_error(this.send_process_supported_type_message(&state));
 
-                            this.output_when_error(this.send_process_whatever_message(&state));
+                            //sent_messages_count.pp();
 
-                            sent_messages_count.pp();
+                            //this.output_when_error(this.send_process_whatever_message(&state));
 
+                            //sent_messages_count.pp();
 
                         }
                         AllOrNot::NotAll(mapage_type) =>
@@ -561,7 +572,7 @@ impl WindowContentsState
 
                                     this.output_when_error(this.send_process_supported_type_message(&state));
 
-                                    sent_messages_count.pp();
+                                    //sent_messages_count.pp();
 
                                 }
                                 MapageType::Whatever =>
@@ -569,7 +580,7 @@ impl WindowContentsState
 
                                     this.output_when_error(this.send_process_whatever_message(&state));
 
-                                    sent_messages_count.pp();
+                                    //sent_messages_count.pp();
 
                                 }
                                 MapageType::TypeInstance => todo!(),
@@ -597,14 +608,16 @@ impl WindowContentsState
                     }
                     */
 
-                    if sent_messages_count > 0
-                    {
+                    //if sent_messages_count > 0
+                    //{
+                    
+                    this.clear_text_output();
 
-                        this.actor_poller.start();
+                    this.actor_poller.start();
 
-                        run_button.set_sensitive(false);
+                    run_button.set_sensitive(false);
 
-                    }
+                    //}
                     
                 })
 
@@ -635,9 +648,9 @@ impl WindowContentsState
                                 if let Some(res) = work_in_progress_result.result()
                                 {
 
-                                    print!("received:\n\n");
+                                    //print!("received:\n\n");
 
-                                    print!("{}", res);
+                                    //print!("{}", res);
 
                                     let mut end_iter = this.text_output.buffer().end_iter();
 
@@ -706,7 +719,16 @@ impl WindowContentsState
 
     }
 
-    pub fn send_process_supported_type_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    fn send_process_all_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        let input_message = MapageTypeActorInputMessage::ProcessAll(state.output_format);
+
+        self.io_client.input_sender_ref().try_send(input_message)
+
+    }
+
+    fn send_process_supported_type_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {
 
         let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, self.supported_type_sub_contents.all_or_not_supported_type());
@@ -715,12 +737,19 @@ impl WindowContentsState
 
     }
 
-    pub fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {
 
         let input_message = MapageTypeActorInputMessage::ProcessWhatever(state.output_format, self.whatever_sub_contents.all_or_not_whatever());
 
         self.io_client.input_sender_ref().try_send(input_message)
+
+    }
+
+    fn clear_text_output(&self)
+    {
+
+        self.text_output.buffer().set_text("");
 
     }
 
