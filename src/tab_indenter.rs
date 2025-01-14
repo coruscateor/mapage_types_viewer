@@ -3,6 +3,7 @@ use libsync::{crossbeam::mpmc::tokio::array_queue::Sender, BoundedSendError};
 
 use crate::actors::MapageTypeActorOutputMessage;
 
+/*
 #[derive(Clone)]
 pub struct TabIndenter
 {
@@ -67,13 +68,14 @@ impl TabIndenter
     }
 
 }
+*/
 
 /*
 cannot borrow `*self` as mutable because it is also borrowed as immutable
 mutable borrow occurs hererustcClick for full compiler diagnostic
 */
 
-/*
+#[derive(Clone)]
 pub struct TabIndenter<'a>
 {
 
@@ -118,7 +120,7 @@ impl<'a> TabIndenter<'a>
 
     }
 
-    async fn send_indentation(&self) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    pub async fn send_indentation(&self) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
         let mut level = self.level;
@@ -137,4 +139,4 @@ impl<'a> TabIndenter<'a>
     }
 
 }
-*/
+
