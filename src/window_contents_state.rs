@@ -30,6 +30,7 @@ use gtk_estate::adw::{HeaderBar, WindowTitle};
 
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
+use gtk_estate::gtk4::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
 
 use gtk_estate::{impl_weak_self_methods, scs_add, RcWidgetAdapter, StateContainers, StoredWidgetObject, WidgetAdapter, WidgetStateContainer, DynWidgetStateContainer, impl_widget_state_container_traits, RcSimpleTimeOut, SimpleTimeOut};
@@ -172,6 +173,14 @@ impl WindowContentsState
 
         input_contents_box.set_margin_top(10);
 
+        //
+
+        let mapage_types_label = Label::builder().label("MapageType:").halign(Align::Start).build();
+
+        input_contents_box.append(&mapage_types_label);
+
+        //
+
         let mapage_types_dropdown = new_mapage_type_strs_dropdown();
 
         //mapage_types_dropdown.set_hexpand_set(true);
@@ -279,7 +288,7 @@ impl WindowContentsState
 
         //whatever_sub_contents
 
-        this.whatever_sub_contents.on_whatever_str_selected().subscribe(&weak_self, |_sender, this|
+        this.whatever_sub_contents.on_whatever_str_selected().subscribe(&weak_self, |_sender, this| //all_or_not, 
         {
 
             this.clear_text_output();
@@ -288,10 +297,19 @@ impl WindowContentsState
 
         });
 
-        this.whatever_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, event_arg, this|
+        this.whatever_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, message, this| //event_arg,
         {
 
-            this.text_output.buffer().set_text(event_arg);
+            this.text_output.buffer().set_text(message)
+
+            /*
+            if let Err(message) = &this.whatever_sub_contents.all_or_not_whatever()
+            {
+
+                this.text_output.buffer().set_text(message); //event_arg);
+
+            }
+            */
 
         });
 
@@ -530,96 +548,103 @@ impl WindowContentsState
             //try_up_rc(&weak_self_moved, |this|
             //{
 
-                if this.actor_poller.is_active()
+            if this.actor_poller.is_active()
+            {
+
+                return;
+
+            }
+
+            let mut should_run = true;
+
+            //let try_send_res;
+
+            //let mut sent_messages_count = 0;
+
+            this.mut_state.borrow(|state|
+            {
+
+                match state.all_or_not_mapage_type
                 {
 
-                    return;
+                    AllOrNot::All =>
+                    {
+
+                        this.output_when_error(this.send_process_all_message(&state));
+
+                        //this.output_when_error(this.send_process_supported_type_message(&state));
+
+                        //sent_messages_count.pp();
+
+                        //this.output_when_error(this.send_process_whatever_message(&state));
+
+                        //sent_messages_count.pp();
+
+                    }
+                    AllOrNot::NotAll(mapage_type) =>
+                    {
+
+                        match mapage_type
+                        {
+
+                            MapageType::SupportedType =>
+                            {
+
+                                this.output_when_error(this.send_process_supported_type_message(&state));
+
+                                //sent_messages_count.pp();
+
+                            }
+                            MapageType::Whatever =>
+                            {
+
+                                should_run = this.output_when_error(this.send_process_whatever_message(&state));
+
+                                //sent_messages_count.pp();
+
+                            }
+                            MapageType::TypeInstance => todo!(),
+                            MapageType::Command => todo!(),
+                            MapageType::CommandResult => todo!(),
+                            MapageType::CommandError => todo!(),
+                            MapageType::StreamedMessage => todo!(),
+                            
+                        }
+
+                    }
 
                 }
 
-                //let try_send_res;
+                //let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
 
-                //let mut sent_messages_count = 0;
+                //let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
 
-                this.mut_state.borrow(|state|
+                /*
+                if let Err(err) = try_send_res
                 {
 
-                    match state.all_or_not_mapage_type
-                    {
+                    this.text_output.buffer().set_text(&err.to_string());
 
-                        AllOrNot::All =>
-                        {
+                }
+                */
 
-                            this.output_when_error(this.send_process_all_message(&state));
+                //if sent_messages_count > 0
+                //{
+                
+                if should_run
+                {
 
-                            //this.output_when_error(this.send_process_supported_type_message(&state));
-
-                            //sent_messages_count.pp();
-
-                            //this.output_when_error(this.send_process_whatever_message(&state));
-
-                            //sent_messages_count.pp();
-
-                        }
-                        AllOrNot::NotAll(mapage_type) =>
-                        {
-
-                            match mapage_type
-                            {
-
-                                MapageType::SupportedType =>
-                                {
-
-                                    this.output_when_error(this.send_process_supported_type_message(&state));
-
-                                    //sent_messages_count.pp();
-
-                                }
-                                MapageType::Whatever =>
-                                {
-
-                                    this.output_when_error(this.send_process_whatever_message(&state));
-
-                                    //sent_messages_count.pp();
-
-                                }
-                                MapageType::TypeInstance => todo!(),
-                                MapageType::Command => todo!(),
-                                MapageType::CommandResult => todo!(),
-                                MapageType::CommandError => todo!(),
-                                MapageType::StreamedMessage => todo!(),
-                                
-                            }
-
-                        }
-
-                    }
-
-                    //let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, this.supported_type_sub_contents.all_or_not_supported_type()); //state.supported_type); //state.mapage_type,
-
-                    //let try_send_res = this.io_client.input_sender_ref().try_send(input_message);
-
-                    /*
-                    if let Err(err) = try_send_res
-                    {
-
-                        this.text_output.buffer().set_text(&err.to_string());
-
-                    }
-                    */
-
-                    //if sent_messages_count > 0
-                    //{
-                    
                     this.clear_text_output();
 
                     this.actor_poller.start();
-
+    
                     run_button.set_sensitive(false);
 
-                    //}
+                }
+
+                //}
                     
-                })
+            })
 
             //} //);
 
@@ -707,15 +732,38 @@ impl WindowContentsState
 
     }
 
-    pub fn output_when_error(&self, result: Result<(), BoundedSendError<MapageTypeActorInputMessage>>)
+    pub fn output_when_error<T>(&self, result: Result<T, BoundedSendError<MapageTypeActorInputMessage>>) -> T
+        where T: Default
     {
 
+        match result
+        {
+
+            Ok(res) =>
+            {
+
+                res
+
+            }
+            Err(err) =>
+            {
+
+                self.text_output.buffer().set_text(&err.to_string());
+
+                T::default()
+
+            }
+
+        }
+
+        /*
         if let Err(err) = result
         {
 
             self.text_output.buffer().set_text(&err.to_string());
 
         }
+        */
 
     }
 
@@ -737,12 +785,45 @@ impl WindowContentsState
 
     }
 
-    fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        let input_message = MapageTypeActorInputMessage::ProcessWhatever(state.output_format, self.whatever_sub_contents.all_or_not_whatever());
+        match self.whatever_sub_contents.all_or_not_whatever()
+        {
 
-        self.io_client.input_sender_ref().try_send(input_message)
+            Ok(res) =>
+            {
+
+                let input_message = MapageTypeActorInputMessage::ProcessWhatever(state.output_format, res);
+
+                if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
+                {
+
+                    Err(err)
+
+                }
+                else
+                {
+
+                    Ok(true)
+
+                }
+
+            }
+            Err(err) =>
+            {
+
+                self.text_output.buffer().set_text(&err);
+
+                Ok(false)
+
+            }
+
+        }
+
+        //let input_message = MapageTypeActorInputMessage::ProcessWhatever(state.output_format, self.whatever_sub_contents.all_or_not_whatever());
+
+        //self.io_client.input_sender_ref().try_send(input_message)
 
     }
 

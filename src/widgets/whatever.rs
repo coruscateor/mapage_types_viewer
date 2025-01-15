@@ -7,16 +7,16 @@ use std::rc::Rc;
 use std::cell::LazyCell;
 use std::sync::LazyLock;
 
-use crate::SupportedType;
+use crate::Whatever;
 
 static WHATEVER_VARIANT_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 {
     
-    let mut whatever_strs = Vec::with_capacity(SupportedType::COUNT + 1);
+    let mut whatever_strs = Vec::with_capacity(Whatever::COUNT + 1);
 
     whatever_strs.push("*");
 
-    for item in SupportedType::iter()
+    for item in Whatever::iter()
     {
 
         whatever_strs.push(item.into());

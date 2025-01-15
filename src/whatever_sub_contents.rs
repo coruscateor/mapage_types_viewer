@@ -1,6 +1,6 @@
 use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, Text, TextView, Widget}};
+use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
 
 use crate::{widgets::{new_whatever_strs_dropdown}, AllOrNot, Whatever, WindowContentsState};
 
@@ -17,11 +17,11 @@ pub struct WhateverSubContents
 
     whatever_strs_dropdown: DropDown,
     whatever_box: Box,
-    all_or_not_whatever: RefCellStore<AllOrNot<Whatever>>,
-    on_whatever_str_selected: SingleSubEvent<Self, WindowContentsState>,
+    all_or_not_whatever: RefCellStore<Result<AllOrNot<Whatever>, String>>, //RefCellStore<AllOrNot<Whatever>>,
+    on_whatever_str_selected: SingleSubEvent<Self, WindowContentsState>, //SingleSubArgsEvent<Self, AllOrNot<Whatever>, WindowContentsState>,
     value_input: TextView,
     on_value_input_parse_error: SingleSubArgsEvent<Self, String, WindowContentsState>,
-    detected_whatever_variant: Text
+    detected_whatever_variant: TextView
 
 }
 
@@ -59,17 +59,23 @@ impl WhateverSubContents
 
         //
 
-        let value_input = TextView::builder().build();
+        let value_input = TextView::builder().accepts_tab(false).build();
 
-        whatever_box.append(&value_input);
+        let value_input_sw = ScrolledWindow::builder().child(&value_input).build();
+
+        whatever_box.append(&value_input_sw);
 
         //
 
         //What is in all_or_not_whatever?
 
-        let detected_whatever_variant = Text::builder().editable(false).build();
+        let detected_whatever_variant = TextView::builder().editable(false).build(); //.text("All Variants")
 
-        whatever_box.append(&detected_whatever_variant);
+        let detected_whatever_variant_sw = ScrolledWindow::builder().child(&detected_whatever_variant).build();
+
+        whatever_box.append(&detected_whatever_variant_sw);
+
+        detected_whatever_variant.buffer().set_text("All Variants");
 
         //
     
@@ -81,8 +87,8 @@ impl WhateverSubContents
 
                 whatever_strs_dropdown,
                 whatever_box,
-                all_or_not_whatever: RefCellStore::new(AllOrNot::All),
-                on_whatever_str_selected: SingleSubEvent::new(weak_self),
+                all_or_not_whatever: RefCellStore::new(Ok(AllOrNot::All)),
+                on_whatever_str_selected: SingleSubEvent::new(weak_self), //SingleSubArgsEvent::new(weak_self),
                 value_input,
                 on_value_input_parse_error: SingleSubArgsEvent::new(weak_self),
                 detected_whatever_variant
@@ -96,6 +102,8 @@ impl WhateverSubContents
         //clone!( #[strong] this,
 
         //let this2 = this.clone();
+
+        //Try set the whatever variant, or all, when is a String is selected.
 
         this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |whatever_strs_dropdown|
         {
@@ -120,6 +128,25 @@ impl WhateverSubContents
             //});
 
         }));
+
+        this.value_input.connect_move_focus(clone!( #[strong] this, move |_value_input, _|
+        {
+
+            if let Some(item) = this.whatever_strs_dropdown.selected_item()
+            {
+
+                if let Some(item) = item.downcast_ref::<StringObject>()
+                {
+
+                    let item_string = item.string();
+
+                    this.try_set_whatever(&item_string);
+                    
+                }
+
+            }
+
+        }));
         
         this
 
@@ -138,7 +165,11 @@ impl WhateverSubContents
 
     //Implement impl_pub_single_sub_event_methods
 
+    //impl_pub_single_sub_args_event_method!(on_whatever_str_selected, AllOrNot<Whatever>, WindowContentsState);
+
     impl_pub_single_sub_event_method!(on_whatever_str_selected, WindowContentsState);
+
+    //impl_pub_single_sub_event_method!(on_value_input_parse_error, WindowContentsState);
 
     impl_pub_single_sub_args_event_method!(on_value_input_parse_error, String, WindowContentsState);
 
@@ -149,12 +180,31 @@ impl WhateverSubContents
 
     }
 
-    pub fn all_or_not_whatever(&self) -> AllOrNot<Whatever>
+    pub fn all_or_not_whatever(&self) -> Result<AllOrNot<Whatever>, String>
     {
 
         self.all_or_not_whatever.get()
 
     }
+
+    /*
+    fn raise_on_whatever_str_selected(&self)
+    {
+
+        self.all_or_not_whatever.borrow(|state|
+        {
+
+            if let Ok(all_or_not) = &*state
+            {
+
+                self.on_whatever_str_selected.raise(all_or_not);
+
+            }
+
+        });
+
+    }
+    */
 
     fn try_set_whatever(&self, variant_str: &str)
     {
@@ -162,13 +212,19 @@ impl WhateverSubContents
         if variant_str == "*"
         {
 
-            self.all_or_not_whatever.set(AllOrNot::All);
+            self.all_or_not_whatever.set(Ok(AllOrNot::All));
 
             //this.all_or_not_whatever.borrow_mut(|state| { *state = AllOrNot::All; } ); //.set(AllOrNot::All);
 
+            //self.raise_on_whatever_str_selected();
+
             self.on_whatever_str_selected.raise();
 
-            //this.
+            self.detected_whatever_variant.buffer().set_text("All Variants");
+
+            //Clear the value input buffer.
+
+            self.value_input.buffer().set_text("");
 
         }
         else
@@ -214,6 +270,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::Bool({})", val));
+
                                     the_res = Ok(Whatever::Bool(val));
 
                                     //whatever_res = Whatever::Bool(val);
@@ -244,6 +302,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::Char(\'{}\')", val));
+
                                     the_res = Ok(Whatever::Char(val));
 
                                 }
@@ -267,6 +327,8 @@ impl WhateverSubContents
 
                                 Ok(val) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::F32({})", val));
 
                                     the_res = Ok(Whatever::F32(val));
 
@@ -292,6 +354,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::F64({})", val));
+
                                     the_res = Ok(Whatever::F64(val));
 
                                 }
@@ -315,6 +379,8 @@ impl WhateverSubContents
 
                                 Ok(val) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I8({})", val));
 
                                     the_res = Ok(Whatever::I8(val));
 
@@ -340,6 +406,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I16({})", val));
+
                                     the_res = Ok(Whatever::I16(val));
 
                                 }
@@ -363,6 +431,8 @@ impl WhateverSubContents
 
                                 Ok(val) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I32({})", val));
 
                                     the_res = Ok(Whatever::I32(val));
 
@@ -388,6 +458,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I64({})", val));
+
                                     the_res = Ok(Whatever::I64(val));
 
                                 }
@@ -411,6 +483,8 @@ impl WhateverSubContents
 
                                 Ok(val) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I128({})", val));
 
                                     the_res = Ok(Whatever::I128(val));
 
@@ -436,6 +510,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U8({})", val));
+
                                     the_res = Ok(Whatever::U8(val));
 
                                 }
@@ -459,6 +535,8 @@ impl WhateverSubContents
 
                                 Ok(val) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U16({})", val));
 
                                     the_res = Ok(Whatever::U16(val));
 
@@ -484,6 +562,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U32({})", val));
+
                                     the_res = Ok(Whatever::U32(val));
 
                                 }
@@ -507,6 +587,8 @@ impl WhateverSubContents
 
                                 Ok(val) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U64({})", val));
 
                                     the_res = Ok(Whatever::U64(val));
 
@@ -532,6 +614,8 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U128({})", val));
+
                                     the_res = Ok(Whatever::U128(val));
 
                                 }
@@ -548,6 +632,8 @@ impl WhateverSubContents
                         Whatever::String(_) =>
                         {
 
+                            self.detected_whatever_variant.buffer().set_text(&format!("Whatever::String(\"{}\")", value_input_str));
+
                             the_res = Ok(Whatever::String(value_input_str.to_string()));
 
                         }
@@ -561,6 +647,8 @@ impl WhateverSubContents
 
                                 Ok(_) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecBool({:?})", vec));
 
                                     the_res = Ok(Whatever::VecBool(vec));
 
@@ -627,6 +715,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecF32({:?})", vec));
+
                                     the_res = Ok(Whatever::VecF32(vec));
 
                                 }
@@ -692,6 +782,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecF64({:?})", vec));
+
                                     the_res = Ok(Whatever::VecF64(vec));
 
                                 }
@@ -715,6 +807,8 @@ impl WhateverSubContents
 
                                 Ok(_) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI8({:?})", vec));
 
                                     the_res = Ok(Whatever::VecI8(vec));
 
@@ -740,6 +834,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI16({:?})", vec));
+
                                     the_res = Ok(Whatever::VecI16(vec));
 
                                 }
@@ -763,6 +859,8 @@ impl WhateverSubContents
 
                                 Ok(_) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI32({:?})", vec));
 
                                     the_res = Ok(Whatever::VecI32(vec));
 
@@ -788,6 +886,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI64({:?})", vec));
+
                                     the_res = Ok(Whatever::VecI64(vec));
 
                                 }
@@ -811,6 +911,8 @@ impl WhateverSubContents
 
                                 Ok(_) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI128({:?})", vec));
 
                                     the_res = Ok(Whatever::VecI128(vec));
 
@@ -836,6 +938,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU8({:?})", vec));
+
                                     the_res = Ok(Whatever::VecU8(vec));
 
                                 }
@@ -859,6 +963,8 @@ impl WhateverSubContents
 
                                 Ok(_) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU16({:?})", vec));
 
                                     the_res = Ok(Whatever::VecU16(vec));
 
@@ -884,6 +990,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU32({:?})", vec));
+
                                     the_res = Ok(Whatever::VecU32(vec));
 
                                 }
@@ -907,6 +1015,8 @@ impl WhateverSubContents
 
                                 Ok(_) =>
                                 {
+
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU64({:?})", vec));
 
                                     the_res = Ok(Whatever::VecU64(vec));
 
@@ -932,6 +1042,8 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
+                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU128({:?})", vec));
+
                                     the_res = Ok(Whatever::VecU128(vec));
 
                                 }
@@ -954,7 +1066,9 @@ impl WhateverSubContents
                         Ok(res) =>
                         {
 
-                            self.all_or_not_whatever.set(AllOrNot::NotAll(res));
+                            self.all_or_not_whatever.set(Ok(AllOrNot::NotAll(res)));
+
+                            //self.raise_on_whatever_str_selected();
 
                             self.on_whatever_str_selected.raise();
 
@@ -962,15 +1076,27 @@ impl WhateverSubContents
                         Err(error_message) =>
                         {
 
-                            //Pass parameter by move.
+                            self.detected_whatever_variant.buffer().set_text(&error_message);
 
-                            self.on_value_input_parse_error.raise(&error_message);
+                            self.all_or_not_whatever.set(Err(error_message));
+
+                            self.all_or_not_whatever.borrow(|store|
+                            {
+
+                                if let Err(message) = &*store
+                                {
+
+                                    self.on_value_input_parse_error.raise(message);
+
+                                }
+
+                                //self.on_value_input_parse_error.raise(); //&error_message);
+
+                            })
 
                         }
 
-                    }
-
-                    
+                    }            
 
                 }
                 Err(err) =>
@@ -1010,7 +1136,9 @@ fn parse_array<T>(value_input_str: &str, vec: &mut Vec<T>) -> Result<(), String>
     for item in split_value_input
     {
 
-        let res = T::from_str(item);
+        let trimmed_item = item.trim();
+
+        let res = T::from_str(trimmed_item);
 
         match res
         {
