@@ -175,13 +175,25 @@ impl WindowContentsState
 
         //
 
-        let mapage_types_label = Label::builder().label("MapageType:").halign(Align::Start).build();
-
-        input_contents_box.append(&mapage_types_label);
+        let mapage_types_box = Box::builder().orientation(Orientation::Vertical).spacing(2).build();
 
         //
 
+        let mapage_types_label = Label::builder().label("MapageType").halign(Align::Start).build();
+
+        //input_contents_box.append(&mapage_types_label);
+
+        mapage_types_box.append(&mapage_types_label);
+
+        //
+
+        let mapage_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
+
         let mapage_types_dropdown = new_mapage_type_strs_dropdown();
+
+        mapage_types_dropdown.set_width_request(180);
+
+        mapage_strs_dropdown_box.append(&mapage_types_dropdown);
 
         //mapage_types_dropdown.set_hexpand_set(true);
 
@@ -189,11 +201,9 @@ impl WindowContentsState
 
         //input_contents_box.append(&mapage_types_dropdown);
 
-        let mapage_types_box = Box::builder().orientation(Orientation::Horizontal).spacing(2).build();
+        mapage_types_box.append(&mapage_strs_dropdown_box);
 
-        mapage_types_box.append(&mapage_types_dropdown);
-
-        mapage_types_dropdown.set_width_request(180);
+        //
 
         input_contents_box.append(&mapage_types_box);
 
@@ -770,11 +780,40 @@ impl WindowContentsState
     fn send_process_all_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        let input_message = MapageTypeActorInputMessage::ProcessAll(state.output_format);
+        let all_or_not_supported_type = self.supported_type_sub_contents.all_or_not_supported_type();
+
+        let all_or_not_whatever;
+
+        if let Ok(res) = self.whatever_sub_contents.all_or_not_whatever()
+        {
+
+            all_or_not_whatever = res;
+
+        }
+        else
+        {
+
+            //Output error message
+
+            return Ok(());
+            
+        }
+
+        let input_message = MapageTypeActorInputMessage::ProcessAll(state.output_format, all_or_not_supported_type, all_or_not_whatever);
 
         self.io_client.input_sender_ref().try_send(input_message)
 
     }
+
+    fn send_process_all_defualt_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        let input_message = MapageTypeActorInputMessage::ProcessAllDefault(state.output_format);
+
+        self.io_client.input_sender_ref().try_send(input_message)
+
+    }
+
 
     fn send_process_supported_type_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {

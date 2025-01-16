@@ -32,6 +32,14 @@ mod tab_indenter;
 
 pub use tab_indenter::*;
 
+mod type_instance_sub_contents;
+
+pub use type_instance_sub_contents::*;
+
+mod whatever_shared;
+
+pub use whatever_shared::*;
+
 fn main()
 {
 

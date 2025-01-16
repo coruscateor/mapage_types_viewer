@@ -24,7 +24,13 @@ impl SupportedTypeSubContents
     pub fn new() -> Rc<Self>
     {
 
+        let supported_type_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+
+        //
+
         let label = Label::builder().label("SupportedType").halign(Align::Start).build();
+
+        supported_type_box.append(&label);
 
         //
 
@@ -37,12 +43,6 @@ impl SupportedTypeSubContents
         let supported_type_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
 
         supported_type_strs_dropdown_box.append(&supported_type_strs_dropdown);
-
-        //
-
-        let supported_type_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
-
-        supported_type_box.append(&label);
 
         supported_type_box.append(&supported_type_strs_dropdown_box);
 

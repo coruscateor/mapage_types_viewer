@@ -15,5 +15,7 @@ mod whatever;
 
 pub use whatever::*;
 
+mod type_instance;
 
+pub use type_instance::*;
 

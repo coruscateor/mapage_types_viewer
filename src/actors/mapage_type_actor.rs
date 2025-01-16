@@ -26,7 +26,8 @@ use crate::TabIndenter;
 pub enum MapageTypeActorInputMessage
 {
 
-    ProcessAll(OutputFormat),
+    ProcessAll(OutputFormat, AllOrNot<SupportedType>, AllOrNot<Whatever>),
+    ProcessAllDefault(OutputFormat),
     ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>),
     ProcessWhatever(OutputFormat, AllOrNot<Whatever>)
 
@@ -41,10 +42,16 @@ impl Display for MapageTypeActorInputMessage
         match self
         {
 
-            MapageTypeActorInputMessage::ProcessAll(output_format) =>
+            MapageTypeActorInputMessage::ProcessAll(output_format, all_or_not_supported_type, whatever_sub_contents) =>
             {
 
-                write!(f, "ProcessSupportedType({output_format:?})")
+                write!(f, "ProcessAll({output_format:?}, {all_or_not_supported_type:?}, {whatever_sub_contents:?})")
+
+            }
+            MapageTypeActorInputMessage::ProcessAllDefault(output_format) =>
+            {
+
+                write!(f, "ProcessAllDefault({output_format:?})")
 
             }
             MapageTypeActorInputMessage::ProcessSupportedType(output_format, all_or_not_supported_type) =>
@@ -146,11 +153,17 @@ impl MapageTypeActorState
             match message
             {
 
-                MapageTypeActorInputMessage::ProcessAll(output_format) =>
+                MapageTypeActorInputMessage::ProcessAll(output_format, all_or_not_supported_type, all_or_not_whatever) =>
                 {
+                    
+                    processing_res = self.process_all_message(output_format, &output_sender, all_or_not_supported_type, all_or_not_whatever).await;
     
-                    processing_res = self.process_all_message(output_format, &output_sender).await;
-    
+                }
+                MapageTypeActorInputMessage::ProcessAllDefault(output_format) =>
+                {
+                    
+                    processing_res = self.process_all_default_message(output_format, &output_sender).await;
+                    
                 }
                 MapageTypeActorInputMessage::ProcessSupportedType(output_format, all_or_not_supported_type) =>
                 {
@@ -294,7 +307,24 @@ impl MapageTypeActorState
     async fn send_serde_json_value_heading(&self) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
-        self.send_str("serde_json::Value:: ...\n\n").await
+        self.send_str("serde_json::Value:: ...\n\n\n\n").await
+
+    }
+
+    async fn send_value_enum_heading(&self, output_format: OutputFormat) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        match output_format
+        {
+
+            OutputFormat::Json =>
+            {
+
+                self.send_serde_json_value_heading().await
+
+            }
+
+        }
 
     }
 
@@ -486,7 +516,33 @@ impl MapageTypeActorState
 
     }
 
-    async fn process_all(&mut self, output_format: OutputFormat, output_sender: &Sender<MapageTypeActorOutputMessage>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    async fn process_all(&mut self, output_format: OutputFormat, output_sender: &Sender<MapageTypeActorOutputMessage>, all_or_not_supported_type: AllOrNot<SupportedType>, all_or_not_whatever: AllOrNot<Whatever>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        self.send_str("Process All:\n\n\n\n").await?;
+
+        self.send_str("SupportedType:\n\n\n\n").await?;
+
+        self.process_all_or_not_supported_type(output_format, all_or_not_supported_type, output_sender).await?;
+
+        self.send_str("Whatever:\n\n\n\n").await?;
+
+        self.process_all_or_not_whatever(output_format, all_or_not_whatever, output_sender).await?;
+
+        Ok(())
+
+    }
+
+    async fn process_all_message(&mut self, output_format: OutputFormat, output_sender: &Sender<MapageTypeActorOutputMessage>, all_or_not_supported_type: AllOrNot<SupportedType>, all_or_not_whatever: AllOrNot<Whatever>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        self.process_all(output_format, output_sender, all_or_not_supported_type, all_or_not_whatever).await?;
+
+        self.send_done().await
+
+    }
+
+    async fn process_all_default(&mut self, output_format: OutputFormat, output_sender: &Sender<MapageTypeActorOutputMessage>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
         self.send_str("Process All:\n\n\n\n").await?;
@@ -503,10 +559,10 @@ impl MapageTypeActorState
 
     }
 
-    async fn process_all_message(&mut self, output_format: OutputFormat, output_sender: &Sender<MapageTypeActorOutputMessage>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    async fn process_all_default_message(&mut self, output_format: OutputFormat, output_sender: &Sender<MapageTypeActorOutputMessage>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
-        self.process_all(output_format, output_sender).await?;
+        self.process_all_default(output_format, output_sender).await?;
 
         self.send_done().await
 
@@ -552,7 +608,7 @@ impl MapageTypeActorState
 
                         //self.send_str("serde_json::Value::...").await?;
 
-                        self.send_serde_json_value_heading().await?;
+                        //self.send_serde_json_value_heading().await?;
 
                         let tab_indenter = TabIndenter::new(output_sender); //self.io_server.output_sender_ref()); //output_sender_ref);
 
@@ -629,6 +685,8 @@ impl MapageTypeActorState
     async fn process_all_or_not_supported_type(&mut self, output_format: OutputFormat, all_or_not_supported_type: AllOrNot<SupportedType>, output_sender: &Sender<MapageTypeActorOutputMessage>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //bool
     {
 
+        self.send_value_enum_heading(output_format).await?;
+
         match all_or_not_supported_type
         {
 
@@ -675,6 +733,8 @@ impl MapageTypeActorState
 
     async fn process_all_or_not_whatever(&mut self, output_format: OutputFormat, all_or_not_whatever: AllOrNot<Whatever>, output_sender: &Sender<MapageTypeActorOutputMessage>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
+
+        self.send_value_enum_heading(output_format).await?;
 
         match all_or_not_whatever
         {
@@ -739,7 +799,7 @@ impl MapageTypeActorState
                     Ok(res) =>
                     {
 
-                        self.send_serde_json_value_heading().await?;
+                        //self.send_serde_json_value_heading().await?;
 
                         //self.send_str("serde_json::Value::...\n\n").await?;
 

@@ -2,7 +2,7 @@ use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
 
-use crate::{widgets::{new_whatever_strs_dropdown}, AllOrNot, Whatever, WindowContentsState};
+use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
 
@@ -12,34 +12,47 @@ use gtk_estate::helpers::text_view::get_text_view_string;
 
 use gtk_estate::gtk4::glib::clone;
 
-pub struct WhateverSubContents
+pub struct TypeInstanceSubContents
 {
 
+    type_instance_strs_dropdown: DropDown,
     whatever_strs_dropdown: DropDown,
-    whatever_box: Box,
-    all_or_not_whatever: RefCellStore<Result<AllOrNot<Whatever>, String>>, //RefCellStore<AllOrNot<Whatever>>,
-    on_whatever_str_selected: SingleSubEvent<Self, WindowContentsState>, //SingleSubArgsEvent<Self, AllOrNot<Whatever>, WindowContentsState>,
+    type_instance_box: Box,
+    all_or_not_type_instance: RefCellStore<Result<AllOrNot<TypeInstance>, String>>,
+    on_type_instance_str_selected: SingleSubEvent<Self, WindowContentsState>,
     value_input: TextView,
     on_value_input_parse_error: SingleSubArgsEvent<Self, String, WindowContentsState>,
-    detected_whatever_variant: TextView
+    detected_type_instance_variant: TextView
 
 }
 
-impl WhateverSubContents
+impl TypeInstanceSubContents
 {
 
     pub fn new() -> Rc<Self>
     {
 
-        let whatever_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let type_instance_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
 
         //
 
-        let label = Label::builder().label("Whatever").halign(Align::Start).build();
+        let label = Label::builder().label("TypeInstance").halign(Align::Start).build();
 
-        whatever_box.append(&label);
+        type_instance_box.append(&label);
 
         //
+
+        let type_instance_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
+
+        let type_instance_strs_dropdown = new_type_instance_strs_dropdown();
+
+        type_instance_strs_dropdown.set_width_request(120);
+
+        type_instance_strs_dropdown_box.append(&type_instance_strs_dropdown);
+
+        type_instance_box.append(&type_instance_strs_dropdown_box);
+
+        //Whatever
 
         let whatever_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
 
@@ -49,13 +62,13 @@ impl WhateverSubContents
 
         whatever_strs_dropdown_box.append(&whatever_strs_dropdown);
 
-        whatever_box.append(&whatever_strs_dropdown_box);
+        type_instance_box.append(&whatever_strs_dropdown_box);
 
         //
 
         let value_input_label = Label::builder().label("Value Input").halign(Align::Start).build();
 
-        whatever_box.append(&value_input_label);
+        type_instance_box.append(&value_input_label);
 
         //
 
@@ -63,19 +76,19 @@ impl WhateverSubContents
 
         let value_input_sw = ScrolledWindow::builder().child(&value_input).build();
 
-        whatever_box.append(&value_input_sw);
+        type_instance_box.append(&value_input_sw);
 
         //
 
-        //What is in all_or_not_whatever?
+        //What is in all_or_not_type_instance?
 
-        let detected_whatever_variant = TextView::builder().editable(false).build(); //.text("All Variants")
+        let detected_type_instance_variant = TextView::builder().editable(false).build();
 
-        let detected_whatever_variant_sw = ScrolledWindow::builder().child(&detected_whatever_variant).build();
+        let detected_type_instance_variant_sw = ScrolledWindow::builder().child(&detected_type_instance_variant).build();
 
-        whatever_box.append(&detected_whatever_variant_sw);
+        type_instance_box.append(&detected_type_instance_variant_sw);
 
-        detected_whatever_variant.buffer().set_text("All Variants");
+        detected_type_instance_variant.buffer().set_text("All Variants");
 
         //
     
@@ -84,55 +97,26 @@ impl WhateverSubContents
 
             Self
             {
-
+                
+                type_instance_strs_dropdown,
                 whatever_strs_dropdown,
-                whatever_box,
-                all_or_not_whatever: RefCellStore::new(Ok(AllOrNot::All)),
-                on_whatever_str_selected: SingleSubEvent::new(weak_self), //SingleSubArgsEvent::new(weak_self),
+                type_instance_box,
+                all_or_not_type_instance: RefCellStore::new(Ok(AllOrNot::All)),
+                on_type_instance_str_selected: SingleSubEvent::new(weak_self),
                 value_input,
                 on_value_input_parse_error: SingleSubArgsEvent::new(weak_self),
-                detected_whatever_variant
+                detected_type_instance_variant
 
             }
         
         });
 
-        //let weak = this.downgrade();
+        //Try set the TypeInstance variant, or all, when is a String is selected.
 
-        //clone!( #[strong] this,
-
-        //let this2 = this.clone();
-
-        //Try set the whatever variant, or all, when is a String is selected.
-
-        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |whatever_strs_dropdown|
+        this.type_instance_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |type_instance_strs_dropdown|
         {
 
-            //try_up_rc(&weak, |this|
-            //{
-
-                if let Some(item) = whatever_strs_dropdown.selected_item()
-                {
-
-                    if let Some(item) = item.downcast_ref::<StringObject>()
-                    {
-
-                        let item_string = item.string();
-
-                        this.try_set_whatever(&item_string);
-                        
-                    }
-
-                }
-
-            //});
-
-        }));
-
-        this.value_input.connect_move_focus(clone!( #[strong] this, move |_value_input, _|
-        {
-
-            if let Some(item) = this.whatever_strs_dropdown.selected_item()
+            if let Some(item) = type_instance_strs_dropdown.selected_item()
             {
 
                 if let Some(item) = item.downcast_ref::<StringObject>()
@@ -140,7 +124,26 @@ impl WhateverSubContents
 
                     let item_string = item.string();
 
-                    this.try_set_whatever(&item_string);
+                    this.try_set_type_instance(&item_string);
+                    
+                }
+
+            }
+
+        }));
+
+        this.value_input.connect_move_focus(clone!( #[strong] this, move |_value_input, _|
+        {
+
+            if let Some(item) = this.type_instance_strs_dropdown.selected_item()
+            {
+
+                if let Some(item) = item.downcast_ref::<StringObject>()
+                {
+
+                    let item_string = item.string();
+
+                    this.try_set_type_instance(&item_string);
                     
                 }
 
@@ -152,75 +155,35 @@ impl WhateverSubContents
 
     }
 
-    /*
-    fn parse_error_at_index(&self, index: usize, inner_message: String) //-> Result<Whatever, String>
-    {
-
-        let error_message = format!("Parsing Error: {{ index: {}, message: {} }}", index, inner_message);
-
-        self.on_value_input_parse_error.raise(&error_message);
-
-    }
-    */
-
-    //Implement impl_pub_single_sub_event_methods
-
-    //impl_pub_single_sub_args_event_method!(on_whatever_str_selected, AllOrNot<Whatever>, WindowContentsState);
-
-    impl_pub_single_sub_event_method!(on_whatever_str_selected, WindowContentsState);
-
-    //impl_pub_single_sub_event_method!(on_value_input_parse_error, WindowContentsState);
+    impl_pub_single_sub_event_method!(on_type_instance_str_selected, WindowContentsState);
 
     impl_pub_single_sub_args_event_method!(on_value_input_parse_error, String, WindowContentsState);
 
     pub fn widget_ref(&self) -> &Box
     {
 
-        &self.whatever_box
+        &self.type_instance_box
 
     }
 
-    pub fn all_or_not_whatever(&self) -> Result<AllOrNot<Whatever>, String>
+    pub fn all_or_not_type_instance(&self) -> Result<AllOrNot<TypeInstance>, String>
     {
 
-        self.all_or_not_whatever.get()
+        self.all_or_not_type_instance.get()
 
     }
 
-    /*
-    fn raise_on_whatever_str_selected(&self)
-    {
-
-        self.all_or_not_whatever.borrow(|state|
-        {
-
-            if let Ok(all_or_not) = &*state
-            {
-
-                self.on_whatever_str_selected.raise(all_or_not);
-
-            }
-
-        });
-
-    }
-    */
-
-    fn try_set_whatever(&self, variant_str: &str)
+    fn try_set_type_instance(&self, variant_str: &str)
     {
 
         if variant_str == "*"
         {
 
-            self.all_or_not_whatever.set(Ok(AllOrNot::All));
+            self.all_or_not_type_instance.set(Ok(AllOrNot::All));
 
-            //this.all_or_not_whatever.borrow_mut(|state| { *state = AllOrNot::All; } ); //.set(AllOrNot::All);
+            self.on_type_instance_str_selected.raise();
 
-            //self.raise_on_whatever_str_selected();
-
-            self.on_whatever_str_selected.raise();
-
-            self.detected_whatever_variant.buffer().set_text("All Variants");
+            self.detected_type_instance_variant.buffer().set_text("All Variants");
 
             //Clear the value input buffer.
 
@@ -230,7 +193,7 @@ impl WhateverSubContents
         else
         {
 
-            let from_str_res = Whatever::from_str(variant_str);
+            let from_str_res = TypeInstance::from_str(variant_str);
 
             match from_str_res
             {
@@ -248,18 +211,14 @@ impl WhateverSubContents
 
                     let value_input_str = buffer_text.as_str();
 
-                    //let value_input_string = get_text_view_string(&this.value_input);
-
-                    //this.all_or_not_whatever.set(AllOrNot::NotAll(res));
-
-                    //let whatever_res;
-
                     let the_res;
+
+                    let detected_type_instance_variant;
 
                     match res
                     {
 
-                        Whatever::Bool(_) =>
+                        TypeInstance::Bool(_) =>
                         {
 
                             let res = bool::from_str(value_input_str);
@@ -270,28 +229,24 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::Bool({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::Bool({})", val);
 
-                                    the_res = Ok(Whatever::Bool(val));
-
-                                    //whatever_res = Whatever::Bool(val);
+                                    the_res = Ok(TypeInstance::Bool(val));
 
                                 }
                                 Err(err) =>
                                 {
 
+                                    detected_type_instance_variant = String::new();
+
                                     the_res = Err(err.to_string());
-
-                                    //this.on_value_input_parse_error.raise(&err.to_string());
-
-                                    //return;
 
                                 }
 
                             }
 
                         }
-                        Whatever::Char(_) =>
+                        TypeInstance::Char(_) =>
                         {
 
                             let res = char::from_str(value_input_str);
@@ -302,13 +257,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::Char(\'{}\')", val));
+                                    detected_type_instance_variant = format!("TypeInstance::Char(\'{}\')", val);
 
-                                    the_res = Ok(Whatever::Char(val));
+                                    the_res = Ok(TypeInstance::Char(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -317,7 +274,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::F32(_) =>
+                        TypeInstance::F32(_) =>
                         {
 
                             let res = f32::from_str(value_input_str);
@@ -328,13 +285,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::F32({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::F32({})", val);
 
-                                    the_res = Ok(Whatever::F32(val));
+                                    the_res = Ok(TypeInstance::F32(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -343,7 +302,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::F64(_) =>
+                        TypeInstance::F64(_) =>
                         {
 
                             let res = f64::from_str(value_input_str);
@@ -354,13 +313,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::F64({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::F64({})", val);
 
-                                    the_res = Ok(Whatever::F64(val));
+                                    the_res = Ok(TypeInstance::F64(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -369,7 +330,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::I8(_) =>
+                        TypeInstance::I8(_) =>
                         {
 
                             let res = i8::from_str(value_input_str);
@@ -380,13 +341,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I8({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::I8({})", val);
 
-                                    the_res = Ok(Whatever::I8(val));
+                                    the_res = Ok(TypeInstance::I8(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -395,7 +358,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::I16(_) =>
+                        TypeInstance::I16(_) =>
                         {
 
                             let res = i16::from_str(value_input_str);
@@ -406,13 +369,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I16({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::I16({})", val);
 
-                                    the_res = Ok(Whatever::I16(val));
+                                    the_res = Ok(TypeInstance::I16(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -421,7 +386,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::I32(_) =>
+                        TypeInstance::I32(_) =>
                         {
 
                             let res = i32::from_str(value_input_str);
@@ -432,13 +397,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I32({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::I32({})", val);
 
-                                    the_res = Ok(Whatever::I32(val));
+                                    the_res = Ok(TypeInstance::I32(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -447,7 +414,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::I64(_) =>
+                        TypeInstance::I64(_) =>
                         {
 
                             let res = i64::from_str(value_input_str);
@@ -458,13 +425,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I64({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::I64({})", val);
 
-                                    the_res = Ok(Whatever::I64(val));
+                                    the_res = Ok(TypeInstance::I64(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -473,7 +442,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::I128(_) =>
+                        TypeInstance::I128(_) =>
                         {
 
                             let res = i128::from_str(value_input_str);
@@ -484,13 +453,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::I128({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::I128({})", val);
 
-                                    the_res = Ok(Whatever::I128(val));
+                                    the_res = Ok(TypeInstance::I128(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -499,7 +470,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::U8(_) =>
+                        TypeInstance::U8(_) =>
                         {
 
                             let res = u8::from_str(value_input_str);
@@ -510,13 +481,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U8({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::U8({})", val);
 
-                                    the_res = Ok(Whatever::U8(val));
+                                    the_res = Ok(TypeInstance::U8(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -525,7 +498,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::U16(_) =>
+                        TypeInstance::U16(_) =>
                         {
 
                             let res = u16::from_str(value_input_str);
@@ -536,13 +509,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U16({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::U16({})", val);
 
-                                    the_res = Ok(Whatever::U16(val));
+                                    the_res = Ok(TypeInstance::U16(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -551,7 +526,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::U32(_) =>
+                        TypeInstance::U32(_) =>
                         {
 
                             let res = u32::from_str(value_input_str);
@@ -562,13 +537,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U32({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::U32({})", val);
 
-                                    the_res = Ok(Whatever::U32(val));
+                                    the_res = Ok(TypeInstance::U32(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -577,7 +554,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::U64(_) =>
+                        TypeInstance::U64(_) =>
                         {
 
                             let res = u64::from_str(value_input_str);
@@ -588,13 +565,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U64({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::U64({})", val);
 
-                                    the_res = Ok(Whatever::U64(val));
+                                    the_res = Ok(TypeInstance::U64(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -603,7 +582,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::U128(_) =>
+                        TypeInstance::U128(_) =>
                         {
 
                             let res = u128::from_str(value_input_str);
@@ -614,13 +593,15 @@ impl WhateverSubContents
                                 Ok(val) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::U128({})", val));
+                                    detected_type_instance_variant = format!("TypeInstance::U128({})", val);
 
-                                    the_res = Ok(Whatever::U128(val));
+                                    the_res = Ok(TypeInstance::U128(val));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -629,15 +610,43 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::String(_) =>
+                        TypeInstance::String(_) =>
                         {
 
-                            self.detected_whatever_variant.buffer().set_text(&format!("Whatever::String(\"{}\")", value_input_str));
+                            detected_type_instance_variant = format!("TypeInstance::String(\"{}\")", value_input_str);
 
-                            the_res = Ok(Whatever::String(value_input_str.to_string()));
+                            the_res = Ok(TypeInstance::String(value_input_str.to_string()));
 
                         }
-                        Whatever::VecBool(mut vec) =>
+                        TypeInstance::Whatever(_) =>
+                        {
+
+                            let res: Result<Whatever, String> = Ok(Whatever::default());
+
+                            match res
+                            {
+
+                                Ok(val) =>
+                                {
+
+                                    detected_type_instance_variant = format!("TypeInstance::Whatveer({:?}", val);
+
+                                    the_res = Ok(TypeInstance::Whatever(val));
+
+                                }
+                                Err(err) =>
+                                {
+
+                                    detected_type_instance_variant = String::new();
+
+                                    the_res = Err(err.to_string());
+
+                                }
+
+                            }
+
+                        }
+                        TypeInstance::VecBool(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -648,63 +657,24 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecBool({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecBool({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecBool(vec));
+                                    the_res = Ok(TypeInstance::VecBool(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
                                 }
 
                             }
-                            
-                            /*
-                            let mut index: usize = 0;
-
-                            let split_value_input = value_input_string.split(',');
-
-                            for item in split_value_input
-                            {
-
-                                let res = bool::from_str(item);
-
-                                match res
-                                {
-
-                                    Ok(val) =>
-                                    {
-
-                                        vec.push(val);
-
-                                    }
-                                    Err(err) =>
-                                    {
-
-                                        this.parse_error_at_index(index, err.to_string());
-
-                                        return;
-
-                                        //the_res = parse_error_at_index(index, err.to_string());
-
-                                        //break;
-
-                                    }
-
-                                }
-
-                                index.pp();
-
-                            }
-
-                            the_res = Ok(Whatever::VecBool(vec));
-                            */
 
                         }
-                        Whatever::VecF32(mut vec) =>
+                        TypeInstance::VecF32(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -715,80 +685,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecF32({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecF32({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecF32(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                            /*
-                            let mut index: usize = 0;
-
-                            let split_value_input = value_input_string.split(',');
-
-                            for item in split_value_input
-                            {
-
-                                let res = f32::from_str(item);
-
-                                match res
-                                {
-
-                                    Ok(val) =>
-                                    {
-
-                                        vec.push(val);
-
-                                    }
-                                    Err(err) =>
-                                    {
-
-                                        this.parse_error_at_index(index, err.to_string());
-
-                                        return;
-
-                                        //the_res = parse_error_at_index(index, err.to_string());
-
-                                        //break;
-
-                                    }
-
-                                }
-
-                                index.pp();
-
-                            }
-
-                            the_res = Ok(Whatever::VecBool(vec));
-                            */
-
-                        }
-                        Whatever::VecF64(mut vec) =>
-                        {
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecF64({:?})", vec));
-
-                                    the_res = Ok(Whatever::VecF64(vec));
+                                    the_res = Ok(TypeInstance::VecF32(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -797,7 +702,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecI8(mut vec) =>
+                        TypeInstance::VecF64(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -808,13 +713,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI8({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecF64({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecI8(vec));
+                                    the_res = Ok(TypeInstance::VecF64(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -823,7 +730,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecI16(mut vec) =>
+                        TypeInstance::VecI8(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -834,13 +741,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI16({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecI8({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecI16(vec));
+                                    the_res = Ok(TypeInstance::VecI8(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -849,7 +758,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecI32(mut vec) =>
+                        TypeInstance::VecI16(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -860,13 +769,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI32({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecI16({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecI32(vec));
+                                    the_res = Ok(TypeInstance::VecI16(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -875,7 +786,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecI64(mut vec) =>
+                        TypeInstance::VecI32(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -886,13 +797,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI64({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecI32({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecI64(vec));
+                                    the_res = Ok(TypeInstance::VecI32(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -901,7 +814,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecI128(mut vec) =>
+                        TypeInstance::VecI64(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -912,13 +825,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecI128({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecI64({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecI128(vec));
+                                    the_res = Ok(TypeInstance::VecI64(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -927,7 +842,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecU8(mut vec) =>
+                        TypeInstance::VecI128(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -938,13 +853,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU8({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecI128({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecU8(vec));
+                                    the_res = Ok(TypeInstance::VecI128(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -953,7 +870,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecU16(mut vec) =>
+                        TypeInstance::VecU8(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -964,13 +881,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU16({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecU8({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecU16(vec));
+                                    the_res = Ok(TypeInstance::VecU8(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -979,7 +898,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecU32(mut vec) =>
+                        TypeInstance::VecU16(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -990,13 +909,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU32({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecU16({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecU32(vec));
+                                    the_res = Ok(TypeInstance::VecU16(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -1005,7 +926,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecU64(mut vec) =>
+                        TypeInstance::VecU32(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -1016,13 +937,15 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU64({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecU32({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecU64(vec));
+                                    the_res = Ok(TypeInstance::VecU32(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -1031,7 +954,7 @@ impl WhateverSubContents
                             }
 
                         }
-                        Whatever::VecU128(mut vec) =>
+                        TypeInstance::VecU64(mut vec) =>
                         {
 
                             let res = parse_array(value_input_str, &mut vec);
@@ -1042,13 +965,43 @@ impl WhateverSubContents
                                 Ok(_) =>
                                 {
 
-                                    self.detected_whatever_variant.buffer().set_text(&format!("Whatever::VecU128({:?})", vec));
+                                    detected_type_instance_variant = format!("TypeInstance::VecU64({:?})", vec);
 
-                                    the_res = Ok(Whatever::VecU128(vec));
+                                    the_res = Ok(TypeInstance::VecU64(vec));
 
                                 }
                                 Err(err) =>
                                 {
+
+                                    detected_type_instance_variant = String::new();
+
+                                    the_res = Err(err);
+
+                                }
+                                
+                            }
+
+                        }
+                        TypeInstance::VecU128(mut vec) =>
+                        {
+
+                            let res = parse_array(value_input_str, &mut vec);
+
+                            match res
+                            {
+
+                                Ok(_) =>
+                                {
+
+                                    detected_type_instance_variant = format!("TypeInstance::VecU128({:?})", vec);
+
+                                    the_res = Ok(TypeInstance::VecU128(vec));
+
+                                }
+                                Err(err) =>
+                                {
+
+                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
@@ -1066,21 +1019,21 @@ impl WhateverSubContents
                         Ok(res) =>
                         {
 
-                            self.all_or_not_whatever.set(Ok(AllOrNot::NotAll(res)));
+                            self.detected_type_instance_variant.buffer().set_text(&detected_type_instance_variant);
 
-                            //self.raise_on_whatever_str_selected();
+                            self.all_or_not_type_instance.set(Ok(AllOrNot::NotAll(res)));
 
-                            self.on_whatever_str_selected.raise();
+                            self.on_type_instance_str_selected.raise();
 
                         }
                         Err(error_message) =>
                         {
 
-                            self.detected_whatever_variant.buffer().set_text(&error_message);
+                            self.detected_type_instance_variant.buffer().set_text(&error_message);
 
-                            self.all_or_not_whatever.set(Err(error_message));
+                            self.all_or_not_type_instance.set(Err(error_message));
 
-                            self.all_or_not_whatever.borrow(|store|
+                            self.all_or_not_type_instance.borrow(|store|
                             {
 
                                 if let Err(message) = &*store
@@ -1089,8 +1042,6 @@ impl WhateverSubContents
                                     self.on_value_input_parse_error.raise(message);
 
                                 }
-
-                                //self.on_value_input_parse_error.raise(); //&error_message);
 
                             })
 
@@ -1101,8 +1052,6 @@ impl WhateverSubContents
                 }
                 Err(err) =>
                 {
-
-                    //parent.output_error(err);
 
                     panic!("{}", err)
 
@@ -1165,53 +1114,3 @@ fn parse_array<T>(value_input_str: &str, vec: &mut Vec<T>) -> Result<(), String>
     Ok(())
 
 }
-
-//Add to GTK Estate
-
-/*
-impl Deref for WhateverSubContents
-{
-
-    type Target = Box;
-
-    fn deref(&self) -> &Self::Target
-    {
-
-        &self.whatever_box
-
-    }
-
-}
-*/
-
-/*
-impl Deref for WhateverSubContents
-{
-
-    type Target = Widget;
-
-    fn deref(&self) -> &Self::Target
-    {
-
-        self.whatever_box.upcast_ref::<Widget>()
-
-    }
-
-}
-*/
-
-/*
-impl Deref for WhateverSubContents
-{
-
-    type Target = dyn IsA<Widget>;
-
-    fn deref(&self) -> &Self::Target
-    {
-
-        self.whatever_box.upcast_ref::<IsA<Widget>>()
-
-    }
-
-}
-*/

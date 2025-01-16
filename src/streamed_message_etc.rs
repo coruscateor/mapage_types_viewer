@@ -129,7 +129,7 @@ impl Default for Whatever
 
 }
 
-#[derive(Debug, Serialize, Deserialize, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
+#[derive(Debug, Serialize, Deserialize, Clone, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
 pub enum TypeInstance
 {
 
