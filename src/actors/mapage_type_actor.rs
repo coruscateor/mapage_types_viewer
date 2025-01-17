@@ -22,6 +22,8 @@ use async_recursion::async_recursion;
 
 use crate::TabIndenter;
 
+use corlib::cell::RefCellStore;
+
 #[derive(Debug)]
 pub enum MapageTypeActorInputMessage
 {
@@ -106,7 +108,8 @@ impl Display for MapageTypeActorOutputMessage
 pub struct MapageTypeActorState
 {
 
-    io_server: IOServer<MapageTypeActorInputMessage, MapageTypeActorOutputMessage>
+    io_server: IOServer<MapageTypeActorInputMessage, MapageTypeActorOutputMessage> //,
+    //test_rfc_store_state: RefCellStore<()>
 
 }
 
@@ -121,7 +124,8 @@ impl MapageTypeActorState
         (io_client, Self
         {
 
-            io_server
+            io_server //,
+            //test_rfc_store_state: RefCellStore::new(())
 
         })
 
