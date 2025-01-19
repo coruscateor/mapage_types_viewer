@@ -12,6 +12,8 @@ use gtk_estate::helpers::text_view::get_text_view_string;
 
 use gtk_estate::gtk4::glib::clone;
 
+use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
+
 pub struct WhateverSubContents
 {
 
@@ -1116,6 +1118,7 @@ impl WhateverSubContents
 
 }
 
+/*
 fn parse_error_at_index<T>(index: usize, inner_message: String) -> Result<T, String>
 {
 
@@ -1165,6 +1168,7 @@ fn parse_array<T>(value_input_str: &str, vec: &mut Vec<T>) -> Result<(), String>
     Ok(())
 
 }
+*/
 
 //Add to GTK Estate
 

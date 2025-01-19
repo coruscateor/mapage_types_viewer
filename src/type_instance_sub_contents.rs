@@ -2,7 +2,7 @@ use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
 
-use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
+use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
 
@@ -11,6 +11,8 @@ use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent};
 use gtk_estate::helpers::text_view::get_text_view_string;
 
 use gtk_estate::gtk4::glib::clone;
+
+use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
 
 pub struct TypeInstanceSubContents
 {
@@ -56,7 +58,7 @@ impl TypeInstanceSubContents
 
         let whatever_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
 
-        let whatever_strs_dropdown = new_whatever_strs_dropdown();
+        let whatever_strs_dropdown = new_whatever_strs_no_all_dropdown();
 
         whatever_strs_dropdown.set_width_request(120);
 
@@ -150,6 +152,13 @@ impl TypeInstanceSubContents
             }
 
         }));
+
+        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |type_instance_strs_dropdown|
+        {
+
+
+
+        }));
         
         this
 
@@ -170,6 +179,20 @@ impl TypeInstanceSubContents
     {
 
         self.all_or_not_type_instance.get()
+
+    }
+
+    fn set_whatever_strs_dropdown_invisible(&self)
+    {
+
+        self.whatever_strs_dropdown.set_visible(false);
+
+    }
+
+    fn set_whatever_strs_dropdown_visible(&self)
+    {
+
+        self.whatever_strs_dropdown.set_visible(false);
 
     }
 
@@ -221,6 +244,8 @@ impl TypeInstanceSubContents
                         TypeInstance::Bool(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = bool::from_str(value_input_str);
 
                             match res
@@ -248,6 +273,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::Char(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = char::from_str(value_input_str);
 
@@ -277,6 +304,8 @@ impl TypeInstanceSubContents
                         TypeInstance::F32(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = f32::from_str(value_input_str);
 
                             match res
@@ -304,6 +333,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::F64(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = f64::from_str(value_input_str);
 
@@ -333,6 +364,8 @@ impl TypeInstanceSubContents
                         TypeInstance::I8(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = i8::from_str(value_input_str);
 
                             match res
@@ -360,6 +393,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::I16(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = i16::from_str(value_input_str);
 
@@ -389,6 +424,8 @@ impl TypeInstanceSubContents
                         TypeInstance::I32(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = i32::from_str(value_input_str);
 
                             match res
@@ -416,6 +453,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::I64(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = i64::from_str(value_input_str);
 
@@ -445,6 +484,8 @@ impl TypeInstanceSubContents
                         TypeInstance::I128(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = i128::from_str(value_input_str);
 
                             match res
@@ -472,6 +513,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::U8(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = u8::from_str(value_input_str);
 
@@ -501,6 +544,8 @@ impl TypeInstanceSubContents
                         TypeInstance::U16(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = u16::from_str(value_input_str);
 
                             match res
@@ -528,6 +573,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::U32(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = u32::from_str(value_input_str);
 
@@ -557,6 +604,8 @@ impl TypeInstanceSubContents
                         TypeInstance::U64(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = u64::from_str(value_input_str);
 
                             match res
@@ -584,6 +633,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::U128(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = u128::from_str(value_input_str);
 
@@ -613,6 +664,8 @@ impl TypeInstanceSubContents
                         TypeInstance::String(_) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             detected_type_instance_variant = format!("TypeInstance::String(\"{}\")", value_input_str);
 
                             the_res = Ok(TypeInstance::String(value_input_str.to_string()));
@@ -620,6 +673,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::Whatever(_) =>
                         {
+
+                            self.set_whatever_strs_dropdown_visible();
 
                             let res: Result<Whatever, String> = Ok(Whatever::default());
 
@@ -649,6 +704,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecBool(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -676,6 +733,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::VecF32(mut vec) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -705,6 +764,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecF64(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -732,6 +793,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::VecI8(mut vec) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -761,6 +824,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI16(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -788,6 +853,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::VecI32(mut vec) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -817,6 +884,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI64(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -844,6 +913,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::VecI128(mut vec) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -873,6 +944,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU8(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -900,6 +973,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::VecU16(mut vec) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -929,6 +1004,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU32(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -957,6 +1034,8 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU64(mut vec) =>
                         {
 
+                            self.set_whatever_strs_dropdown_invisible();
+
                             let res = parse_array(value_input_str, &mut vec);
 
                             match res
@@ -984,6 +1063,8 @@ impl TypeInstanceSubContents
                         }
                         TypeInstance::VecU128(mut vec) =>
                         {
+
+                            self.set_whatever_strs_dropdown_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -1065,6 +1146,7 @@ impl TypeInstanceSubContents
 
 }
 
+/*
 fn parse_error_at_index<T>(index: usize, inner_message: String) -> Result<T, String>
 {
 
@@ -1114,3 +1196,4 @@ fn parse_array<T>(value_input_str: &str, vec: &mut Vec<T>) -> Result<(), String>
     Ok(())
 
 }
+*/

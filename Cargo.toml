@@ -19,7 +19,7 @@ serde = { version = "1.0.215", features = ["derive"] }
 
 serde_json = "1.0.133"
 
-tokio = { version = "1.42.0", features = ["rt", "rt-multi-thread", "macros"] } #, "time", "io-util"
+tokio = { version = "1.43.0", features = ["rt", "rt-multi-thread", "macros"] } #, "time", "io-util"
 
 libsync = { path="../libsync", features = ["std", "crossbeam", "tokio"] }
 
