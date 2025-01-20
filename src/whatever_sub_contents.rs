@@ -2,7 +2,7 @@ use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
 
-use crate::{widgets::{new_whatever_strs_dropdown}, AllOrNot, Whatever, WindowContentsState};
+use crate::{widgets::new_whatever_strs_dropdown, AllOrNot, Whatever, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
 
@@ -33,7 +33,7 @@ impl WhateverSubContents
     pub fn new() -> Rc<Self>
     {
 
-        let whatever_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let whatever_box = Box::builder().orientation(Orientation::Vertical).spacing(6).visible(true).build();
 
         //
 
@@ -66,6 +66,12 @@ impl WhateverSubContents
         let value_input_sw = ScrolledWindow::builder().child(&value_input).build();
 
         whatever_box.append(&value_input_sw);
+
+        //
+
+        let detected_whatever_variant_label = Label::builder().label("Detected Variant Or Variants").halign(Align::Start).build();
+
+        whatever_box.append(&detected_whatever_variant_label);
 
         //
 
@@ -232,8 +238,57 @@ impl WhateverSubContents
         else
         {
 
-            let from_str_res = Whatever::from_str(variant_str);
+            let buffer = self.value_input.buffer();
 
+            let start = buffer.start_iter();
+
+            let end = buffer.end_iter();
+
+            let buffer_text = buffer.text(&start, &end, false);
+
+            let value_input_str = buffer_text.as_str();
+
+            let the_res = try_set_specific_whatever(variant_str, value_input_str);
+
+            match the_res
+            {
+
+                Ok((whatever, variant_string)) =>
+                {
+
+                    self.all_or_not_whatever.set(Ok(AllOrNot::NotAll(whatever)));
+
+                    self.detected_whatever_variant.buffer().set_text(&variant_string);
+
+                    self.on_whatever_str_selected.raise();
+
+                }
+                Err(error_message) =>
+                {
+
+                    self.detected_whatever_variant.buffer().set_text(&error_message);
+
+                    self.all_or_not_whatever.set(Err(error_message));
+
+                    self.all_or_not_whatever.borrow(|store|
+                    {
+
+                        if let Err(message) = &*store
+                        {
+
+                            self.on_value_input_parse_error.raise(message);
+
+                        }
+
+                    })
+
+                }
+
+            }
+
+            //let from_str_res = Whatever::from_str(variant_str);
+
+            /*
             match from_str_res
             {
 
@@ -256,6 +311,7 @@ impl WhateverSubContents
 
                     //let whatever_res;
 
+                    /*
                     let the_res;
 
                     match res
@@ -1061,6 +1117,9 @@ impl WhateverSubContents
                         }
 
                     }
+                    */
+
+                    //let the_res = try_set_specific_whatever()
 
                     match the_res
                     {
@@ -1111,7 +1170,8 @@ impl WhateverSubContents
                 }
 
             }
-            
+            */
+
         }
 
     }

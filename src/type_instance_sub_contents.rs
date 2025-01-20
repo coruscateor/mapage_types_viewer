@@ -18,6 +18,7 @@ pub struct TypeInstanceSubContents
 {
 
     type_instance_strs_dropdown: DropDown,
+    whatever_strs_dropdown_box: Box,
     whatever_strs_dropdown: DropDown,
     type_instance_box: Box,
     all_or_not_type_instance: RefCellStore<Result<AllOrNot<TypeInstance>, String>>,
@@ -34,7 +35,7 @@ impl TypeInstanceSubContents
     pub fn new() -> Rc<Self>
     {
 
-        let type_instance_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let type_instance_box = Box::builder().orientation(Orientation::Vertical).spacing(6).visible(true).build();
 
         //
 
@@ -56,7 +57,7 @@ impl TypeInstanceSubContents
 
         //Whatever
 
-        let whatever_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
+        let whatever_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(false).build();
 
         let whatever_strs_dropdown = new_whatever_strs_no_all_dropdown();
 
@@ -82,6 +83,12 @@ impl TypeInstanceSubContents
 
         //
 
+        let detected_whatever_variant_label = Label::builder().label("Detected Variant Or Variants").halign(Align::Start).build();
+
+        type_instance_box.append(&detected_whatever_variant_label);
+
+        //
+
         //What is in all_or_not_type_instance?
 
         let detected_type_instance_variant = TextView::builder().editable(false).build();
@@ -101,6 +108,7 @@ impl TypeInstanceSubContents
             {
                 
                 type_instance_strs_dropdown,
+                whatever_strs_dropdown_box,
                 whatever_strs_dropdown,
                 type_instance_box,
                 all_or_not_type_instance: RefCellStore::new(Ok(AllOrNot::All)),
@@ -182,17 +190,17 @@ impl TypeInstanceSubContents
 
     }
 
-    fn set_whatever_strs_dropdown_invisible(&self)
+    fn set_whatever_strs_dropdown_box_invisible(&self)
     {
 
-        self.whatever_strs_dropdown.set_visible(false);
+        self.whatever_strs_dropdown_box.set_visible(false);
 
     }
 
-    fn set_whatever_strs_dropdown_visible(&self)
+    fn set_whatever_strs_dropdown_box_visible(&self)
     {
 
-        self.whatever_strs_dropdown.set_visible(false);
+        self.whatever_strs_dropdown_box.set_visible(true);
 
     }
 
@@ -236,7 +244,7 @@ impl TypeInstanceSubContents
 
                     let the_res;
 
-                    let detected_type_instance_variant;
+                    let mut detected_type_instance_variant = String::new();
 
                     match res
                     {
@@ -244,7 +252,7 @@ impl TypeInstanceSubContents
                         TypeInstance::Bool(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = bool::from_str(value_input_str);
 
@@ -262,8 +270,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -274,7 +280,7 @@ impl TypeInstanceSubContents
                         TypeInstance::Char(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = char::from_str(value_input_str);
 
@@ -292,8 +298,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -304,7 +308,7 @@ impl TypeInstanceSubContents
                         TypeInstance::F32(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = f32::from_str(value_input_str);
 
@@ -322,8 +326,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -334,7 +336,7 @@ impl TypeInstanceSubContents
                         TypeInstance::F64(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = f64::from_str(value_input_str);
 
@@ -352,8 +354,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -364,7 +364,7 @@ impl TypeInstanceSubContents
                         TypeInstance::I8(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = i8::from_str(value_input_str);
 
@@ -382,8 +382,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -394,7 +392,7 @@ impl TypeInstanceSubContents
                         TypeInstance::I16(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = i16::from_str(value_input_str);
 
@@ -412,8 +410,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -424,7 +420,7 @@ impl TypeInstanceSubContents
                         TypeInstance::I32(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = i32::from_str(value_input_str);
 
@@ -442,8 +438,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -454,7 +448,7 @@ impl TypeInstanceSubContents
                         TypeInstance::I64(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = i64::from_str(value_input_str);
 
@@ -472,8 +466,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -484,7 +476,7 @@ impl TypeInstanceSubContents
                         TypeInstance::I128(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = i128::from_str(value_input_str);
 
@@ -502,8 +494,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -514,7 +504,7 @@ impl TypeInstanceSubContents
                         TypeInstance::U8(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = u8::from_str(value_input_str);
 
@@ -532,8 +522,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -544,7 +532,7 @@ impl TypeInstanceSubContents
                         TypeInstance::U16(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = u16::from_str(value_input_str);
 
@@ -562,8 +550,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -574,7 +560,7 @@ impl TypeInstanceSubContents
                         TypeInstance::U32(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = u32::from_str(value_input_str);
 
@@ -592,8 +578,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -604,7 +588,7 @@ impl TypeInstanceSubContents
                         TypeInstance::U64(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = u64::from_str(value_input_str);
 
@@ -622,8 +606,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -634,7 +616,7 @@ impl TypeInstanceSubContents
                         TypeInstance::U128(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = u128::from_str(value_input_str);
 
@@ -652,8 +634,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err.to_string());
 
                                 }
@@ -664,7 +644,7 @@ impl TypeInstanceSubContents
                         TypeInstance::String(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             detected_type_instance_variant = format!("TypeInstance::String(\"{}\")", value_input_str);
 
@@ -674,25 +654,33 @@ impl TypeInstanceSubContents
                         TypeInstance::Whatever(_) =>
                         {
 
-                            self.set_whatever_strs_dropdown_visible();
+                            self.set_whatever_strs_dropdown_box_visible();
 
-                            let res: Result<Whatever, String> = Ok(Whatever::default());
+                            //let res: Result<Whatever, String> = Ok(Whatever::default());
+
+                            //let whatever_string;
+
+                            let whatever_object = self.whatever_strs_dropdown.selected_item().expect("Error: Unexpected Item");
+ 
+                            let whatever_string_object = whatever_object.downcast_ref::<StringObject>().expect("Error: Cannot cast to StringObject");
+
+                            let whatever_string = whatever_string_object.string();
+
+                            let res = try_set_specific_whatever( &whatever_string, value_input_str);
 
                             match res
                             {
 
-                                Ok(val) =>
+                                Ok((whatever, detected_variant)) =>
                                 {
 
-                                    detected_type_instance_variant = format!("TypeInstance::Whatveer({:?}", val);
+                                    detected_type_instance_variant = format!("TypeInstance::Whatever({})", detected_variant);
 
-                                    the_res = Ok(TypeInstance::Whatever(val));
+                                    the_res = Ok(TypeInstance::Whatever(whatever));
 
                                 }
                                 Err(err) =>
                                 {
-
-                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err.to_string());
 
@@ -704,7 +692,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecBool(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -722,8 +710,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -734,7 +720,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecF32(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -752,8 +738,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -764,7 +748,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecF64(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -782,8 +766,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -794,7 +776,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI8(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -812,8 +794,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -824,7 +804,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI16(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -842,8 +822,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -854,7 +832,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI32(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -872,8 +850,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -884,7 +860,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI64(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -902,8 +878,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -914,7 +888,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecI128(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -932,8 +906,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -944,7 +916,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU8(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -962,8 +934,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -974,7 +944,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU16(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -992,8 +962,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -1004,7 +972,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU32(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -1022,8 +990,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -1034,7 +1000,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU64(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -1052,8 +1018,6 @@ impl TypeInstanceSubContents
                                 Err(err) =>
                                 {
 
-                                    detected_type_instance_variant = String::new();
-
                                     the_res = Err(err);
 
                                 }
@@ -1064,7 +1028,7 @@ impl TypeInstanceSubContents
                         TypeInstance::VecU128(mut vec) =>
                         {
 
-                            self.set_whatever_strs_dropdown_invisible();
+                            self.set_whatever_strs_dropdown_box_invisible();
 
                             let res = parse_array(value_input_str, &mut vec);
 
@@ -1081,8 +1045,6 @@ impl TypeInstanceSubContents
                                 }
                                 Err(err) =>
                                 {
-
-                                    detected_type_instance_variant = String::new();
 
                                     the_res = Err(err);
 
