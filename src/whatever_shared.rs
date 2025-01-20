@@ -8,8 +8,8 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
 {
 
     let from_str_res = Whatever::from_str(variant_str);
-
-    let detected_type_instance_variant;
+    
+    let detected_whatever_variant;
 
     let whatever;
 
@@ -33,7 +33,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::Bool({})", val);
+                            detected_whatever_variant = format!("Whatever::Bool({})", val);
         
                             whatever = Whatever::Bool(val);
         
@@ -59,7 +59,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::Char(\'{}\')", val);
+                            detected_whatever_variant = format!("Whatever::Char(\'{}\')", val);
         
                             whatever = Whatever::Char(val);
         
@@ -85,7 +85,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::F32({})", val);
+                            detected_whatever_variant = format!("Whatever::F32({})", val);
         
                             whatever = Whatever::F32(val);
         
@@ -111,7 +111,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::F64({})", val);
+                            detected_whatever_variant = format!("Whatever::F64({})", val);
         
                             whatever = Whatever::F64(val);
         
@@ -137,7 +137,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::I8({})", val);
+                            detected_whatever_variant = format!("Whatever::I8({})", val);
         
                             whatever = Whatever::I8(val);
         
@@ -163,16 +163,14 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::I16({})", val);
+                            detected_whatever_variant = format!("Whatever::I16({})", val);
         
                             whatever = Whatever::I16(val);
         
                         }
                         Err(err) =>
                         {
-        
-                            detected_type_instance_variant = String::new();
-        
+
                             return Err(err.to_string());
         
                         }
@@ -191,7 +189,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::I32({})", val);
+                            detected_whatever_variant = format!("Whatever::I32({})", val);
         
                             whatever = Whatever::I32(val);
         
@@ -217,7 +215,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::I64({})", val);
+                            detected_whatever_variant = format!("Whatever::I64({})", val);
         
                             whatever = Whatever::I64(val);
         
@@ -243,7 +241,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::I128({})", val);
+                            detected_whatever_variant = format!("Whatever::I128({})", val);
         
                             whatever = Whatever::I128(val);
         
@@ -269,7 +267,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::U8({})", val);
+                            detected_whatever_variant = format!("Whatever::U8({})", val);
         
                             whatever = Whatever::U8(val);
         
@@ -295,7 +293,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::U16({})", val);
+                            detected_whatever_variant = format!("Whatever::U16({})", val);
         
                             whatever = Whatever::U16(val);
         
@@ -321,7 +319,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::U32({})", val);
+                            detected_whatever_variant = format!("Whatever::U32({})", val);
         
                             whatever = Whatever::U32(val);
         
@@ -347,7 +345,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::U64({})", val);
+                            detected_whatever_variant = format!("Whatever::U64({})", val);
         
                             whatever =Whatever::U64(val);
         
@@ -373,7 +371,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(val) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::U128({})", val);
+                            detected_whatever_variant = format!("Whatever::U128({})", val);
         
                             whatever = Whatever::U128(val);
         
@@ -391,7 +389,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                 Whatever::String(_) =>
                 {
         
-                    detected_type_instance_variant = format!("Whatever::String(\"{}\")", value_input_str);
+                    detected_whatever_variant = format!("Whatever::String(\"{}\")", value_input_str);
         
                     whatever = Whatever::String(value_input_str.to_string());
         
@@ -407,7 +405,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecBool({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecBool({:?})", vec);
         
                             whatever = Whatever::VecBool(vec);
         
@@ -433,7 +431,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecF32({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecF32({:?})", vec);
         
                             whatever = Whatever::VecF32(vec);
         
@@ -459,7 +457,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecF64({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecF64({:?})", vec);
         
                             whatever = Whatever::VecF64(vec);
         
@@ -485,7 +483,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
 
-                            detected_type_instance_variant = format!("Whatever::VecI8({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecI8({:?})", vec);
         
                             whatever = Whatever::VecI8(vec);
         
@@ -511,7 +509,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecI16({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecI16({:?})", vec);
         
                             whatever = Whatever::VecI16(vec);
         
@@ -537,7 +535,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecI32({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecI32({:?})", vec);
         
                             whatever = Whatever::VecI32(vec);
         
@@ -563,7 +561,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecI64({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecI64({:?})", vec);
         
                             whatever = Whatever::VecI64(vec);
         
@@ -589,7 +587,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecI128({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecI128({:?})", vec);
         
                             whatever = Whatever::VecI128(vec);
         
@@ -615,7 +613,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecU8({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecU8({:?})", vec);
         
                             whatever = Whatever::VecU8(vec);
         
@@ -641,7 +639,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecU16({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecU16({:?})", vec);
         
                             whatever =Whatever::VecU16(vec);
         
@@ -667,15 +665,13 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecU32({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecU32({:?})", vec);
         
                             whatever = Whatever::VecU32(vec);
         
                         }
                         Err(err) =>
                         {
-        
-                            detected_type_instance_variant = String::new();
         
                             return Err(err);
         
@@ -695,15 +691,13 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecU64({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecU64({:?})", vec);
         
                             whatever = Whatever::VecU64(vec);
         
                         }
                         Err(err) =>
                         {
-        
-                            detected_type_instance_variant = String::new();
         
                             return Err(err);
         
@@ -723,15 +717,13 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
                         Ok(_) =>
                         {
         
-                            detected_type_instance_variant = format!("Whatever::VecU128({:?})", vec);
+                            detected_whatever_variant = format!("Whatever::VecU128({:?})", vec);
         
                             whatever = Whatever::VecU128(vec);
         
                         }
                         Err(err) =>
                         {
-        
-                            detected_type_instance_variant = String::new();
         
                             return Err(err);
         
@@ -755,7 +747,7 @@ pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Re
 
     //whatever
 
-    Ok((whatever, detected_type_instance_variant))
+    Ok((whatever, detected_whatever_variant))
 
 }
 

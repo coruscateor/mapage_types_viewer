@@ -46,7 +46,7 @@ use serde_json::to_string_pretty;
 
 use crate::actors::{MapageTypeActorInputMessage, MapageTypeActorOutputMessage, MapageTypeActorState};
 
-use crate::{AllOrNot, ApplicationState, SupportedType, SupportedTypeSubContents, WhateverSubContents};
+use crate::{AllOrNot, ApplicationState, SupportedType, SupportedTypeSubContents, TypeInstanceSubContents, WhateverSubContents};
 
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
@@ -97,7 +97,8 @@ pub struct WindowContentsState
     run_button: Button,
     supported_type_sub_contents: Rc<SupportedTypeSubContents>,
     new_window_button: Button,
-    whatever_sub_contents: Rc<WhateverSubContents>
+    whatever_sub_contents: Rc<WhateverSubContents>,
+    type_instance_sub_contents: Rc<TypeInstanceSubContents>
 
 }
 
@@ -221,6 +222,12 @@ impl WindowContentsState
 
         input_contents_box.append(whatever_sub_contents.widget_ref());
 
+        //TypeInstance
+
+        let type_instance_sub_contents = TypeInstanceSubContents::new();
+
+        input_contents_box.append(type_instance_sub_contents.widget_ref());
+
         //
 
         let input_contents_box_sw = ScrolledWindow::builder().child(&input_contents_box).build();
@@ -286,7 +293,8 @@ impl WindowContentsState
                 run_button,
                 supported_type_sub_contents,
                 new_window_button,
-                whatever_sub_contents
+                whatever_sub_contents,
+                type_instance_sub_contents
 
             }
 
@@ -295,6 +303,22 @@ impl WindowContentsState
         //scs_add!(this);
 
         let weak_self = this.weak_self();
+
+        //type_instance_sub_contents
+
+        this.type_instance_sub_contents.on_type_instance_str_selected().subscribe(&weak_self, |_sender, this|
+        {
+
+            this.clear_text_output();
+
+        });
+
+        this.type_instance_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, message, this|
+        {
+
+            this.set_text_output_text(message)
+
+        });
 
         //whatever_sub_contents
 
@@ -310,7 +334,7 @@ impl WindowContentsState
         this.whatever_sub_contents.on_value_input_parse_error().subscribe(&weak_self, |_sender, message, this| //event_arg,
         {
 
-            this.text_output.buffer().set_text(message)
+            this.set_text_output_text(message)
 
             /*
             if let Err(message) = &this.whatever_sub_contents.all_or_not_whatever()
@@ -468,6 +492,8 @@ impl WindowContentsState
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(false);
 
+                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::Whatever =>
                                             {
@@ -475,6 +501,8 @@ impl WindowContentsState
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(true);
+
+                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::TypeInstance =>
@@ -484,6 +512,8 @@ impl WindowContentsState
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(false);
 
+                                                this.type_instance_sub_contents.widget_ref().set_visible(true);
+
                                             }
                                             MapageType::Command =>
                                             {
@@ -491,6 +521,8 @@ impl WindowContentsState
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                             }
                                             MapageType::CommandResult =>
@@ -500,6 +532,8 @@ impl WindowContentsState
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(false);
 
+                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::CommandError =>
                                             {
@@ -508,6 +542,8 @@ impl WindowContentsState
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(false);
 
+                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
+
                                             }
                                             MapageType::StreamedMessage =>
                                             {
@@ -515,6 +551,8 @@ impl WindowContentsState
                                                 this.supported_type_sub_contents.widget_ref().set_visible(false);
 
                                                 this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                             }
 
@@ -613,7 +651,12 @@ impl WindowContentsState
                                 //sent_messages_count.pp();
 
                             }
-                            MapageType::TypeInstance => todo!(),
+                            MapageType::TypeInstance =>
+                            {
+
+                                should_run = this.output_when_error(this.send_process_type_instance_message(&state));
+
+                            }
                             MapageType::Command => todo!(),
                             MapageType::CommandResult => todo!(),
                             MapageType::CommandError => todo!(),
@@ -734,6 +777,13 @@ impl WindowContentsState
 
     impl_weak_self_methods!(widget_adapter);
 
+    fn set_text_output_text(&self, text: &str)
+    {
+
+        self.text_output.buffer().set_text(text);
+
+    }
+
     pub fn output_error<E>(&self, error: E)
         where E: std::error::Error
     {
@@ -784,6 +834,8 @@ impl WindowContentsState
 
         let all_or_not_whatever;
 
+        let all_or_not_type_instance;
+
         if let Ok(res) = self.whatever_sub_contents.all_or_not_whatever()
         {
 
@@ -799,7 +851,22 @@ impl WindowContentsState
             
         }
 
-        let input_message = MapageTypeActorInputMessage::ProcessAll(state.output_format, all_or_not_supported_type, all_or_not_whatever);
+        if let Ok(res) = self.type_instance_sub_contents.all_or_not_type_instance()
+        {
+
+            all_or_not_type_instance = res;
+
+        }
+        else
+        {
+
+            //Output error message
+
+            return Ok(());
+            
+        }
+
+        let input_message = MapageTypeActorInputMessage::ProcessAll(state.output_format, all_or_not_supported_type, all_or_not_whatever, all_or_not_type_instance);
 
         self.io_client.input_sender_ref().try_send(input_message)
 
@@ -852,7 +919,7 @@ impl WindowContentsState
             Err(err) =>
             {
 
-                self.text_output.buffer().set_text(&err);
+                self.set_text_output_text(&err);
 
                 Ok(false)
 
@@ -863,6 +930,44 @@ impl WindowContentsState
         //let input_message = MapageTypeActorInputMessage::ProcessWhatever(state.output_format, self.whatever_sub_contents.all_or_not_whatever());
 
         //self.io_client.input_sender_ref().try_send(input_message)
+
+    }
+
+    fn send_process_type_instance_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        match self.type_instance_sub_contents.all_or_not_type_instance()
+        {
+
+            Ok(res) =>
+            {
+
+                let input_message = MapageTypeActorInputMessage::ProcessTypeInstance(state.output_format, res);
+
+                if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
+                {
+
+                    Err(err)
+
+                }
+                else
+                {
+
+                    Ok(true)
+
+                }
+
+            }
+            Err(err) =>
+            {
+
+                self.set_text_output_text(&err);
+
+                Ok(false)
+
+            }
+
+        }
 
     }
 
