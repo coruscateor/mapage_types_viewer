@@ -2,7 +2,7 @@ use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
 
-use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
+use crate::{widgets::{new_type_instance_strs_dropdown, new_type_instance_strs_no_all_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
 
@@ -14,22 +14,24 @@ use gtk_estate::gtk4::glib::clone;
 
 use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
 
-pub struct TypeInstanceSubContents
+pub struct TypeInstanceSubContents<P>
+    where P: 'static
 {
 
     type_instance_strs_dropdown: DropDown,
     whatever_strs_dropdown_box: Box,
     whatever_strs_dropdown: DropDown,
     type_instance_box: Box,
-    all_or_not_type_instance: RefCellStore<Result<AllOrNot<TypeInstance>, String>>,
-    on_type_instance_str_selected: SingleSubEvent<Self, WindowContentsState>,
+    type_instance_result: RefCellStore<Result<TypeInstance, String>>,
+    on_type_instance_str_selected: SingleSubEvent<Self, P>,
     value_input: TextView,
-    on_value_input_parse_error: SingleSubArgsEvent<Self, String, WindowContentsState>,
+    on_value_input_parse_error: SingleSubArgsEvent<Self, String, P>,
     detected_type_instance_variant: TextView
 
 }
 
-impl TypeInstanceSubContents
+impl<P> TypeInstanceSubContents<P>
+    where P: 'static
 {
 
     pub fn new() -> Rc<Self>
@@ -47,7 +49,7 @@ impl TypeInstanceSubContents
 
         let type_instance_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
 
-        let type_instance_strs_dropdown = new_type_instance_strs_dropdown();
+        let type_instance_strs_dropdown = new_type_instance_strs_no_all_dropdown();
 
         type_instance_strs_dropdown.set_width_request(120);
 
@@ -111,7 +113,7 @@ impl TypeInstanceSubContents
                 whatever_strs_dropdown_box,
                 whatever_strs_dropdown,
                 type_instance_box,
-                all_or_not_type_instance: RefCellStore::new(Ok(AllOrNot::All)),
+                type_instance_result: RefCellStore::new(Ok(TypeInstance::default())),
                 on_type_instance_str_selected: SingleSubEvent::new(weak_self),
                 value_input,
                 on_value_input_parse_error: SingleSubArgsEvent::new(weak_self),
@@ -161,20 +163,22 @@ impl TypeInstanceSubContents
 
         }));
 
+        /*
         this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |type_instance_strs_dropdown|
         {
 
 
 
         }));
+        */
         
         this
 
     }
 
-    impl_pub_single_sub_event_method!(on_type_instance_str_selected, WindowContentsState);
+    impl_pub_single_sub_event_method!(on_type_instance_str_selected, P);
 
-    impl_pub_single_sub_args_event_method!(on_value_input_parse_error, String, WindowContentsState);
+    impl_pub_single_sub_args_event_method!(on_value_input_parse_error, String, P);
 
     pub fn widget_ref(&self) -> &Box
     {
@@ -183,10 +187,10 @@ impl TypeInstanceSubContents
 
     }
 
-    pub fn all_or_not_type_instance(&self) -> Result<AllOrNot<TypeInstance>, String>
+    pub fn type_instance_result(&self) -> Result<TypeInstance, String>
     {
 
-        self.all_or_not_type_instance.get()
+        self.type_instance_result.get()
 
     }
 
@@ -207,898 +211,880 @@ impl TypeInstanceSubContents
     fn try_set_type_instance(&self, variant_str: &str)
     {
 
-        if variant_str == "*"
+
+        let from_str_res = TypeInstance::from_str(variant_str);
+
+        match from_str_res
         {
 
-            self.all_or_not_type_instance.set(Ok(AllOrNot::All));
-
-            self.on_type_instance_str_selected.raise();
-
-            self.detected_type_instance_variant.buffer().set_text("All Variants");
-
-            //Clear the value input buffer.
-
-            self.value_input.buffer().set_text("");
-
-        }
-        else
-        {
-
-            let from_str_res = TypeInstance::from_str(variant_str);
-
-            match from_str_res
+            Ok(res) =>
             {
 
-                Ok(res) =>
+                let buffer = self.value_input.buffer();
+
+                let start = buffer.start_iter();
+
+                let end = buffer.end_iter();
+
+                let buffer_text = buffer.text(&start, &end, false);
+
+                let value_input_str = buffer_text.as_str();
+
+                let the_res;
+
+                let mut detected_type_instance_variant = String::new();
+
+                match res
                 {
 
-                    let buffer = self.value_input.buffer();
-
-                    let start = buffer.start_iter();
-
-                    let end = buffer.end_iter();
-
-                    let buffer_text = buffer.text(&start, &end, false);
-
-                    let value_input_str = buffer_text.as_str();
-
-                    let the_res;
-
-                    let mut detected_type_instance_variant = String::new();
-
-                    match res
+                    TypeInstance::Bool(_) =>
                     {
 
-                        TypeInstance::Bool(_) =>
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = bool::from_str(value_input_str);
+
+                        match res
                         {
 
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = bool::from_str(value_input_str);
-
-                            match res
+                            Ok(val) =>
                             {
 
-                                Ok(val) =>
-                                {
+                                detected_type_instance_variant = format!("TypeInstance::Bool({})", val);
 
-                                    detected_type_instance_variant = format!("TypeInstance::Bool({})", val);
-
-                                    the_res = Ok(TypeInstance::Bool(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
+                                the_res = Ok(TypeInstance::Bool(val));
 
                             }
-
-                        }
-                        TypeInstance::Char(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = char::from_str(value_input_str);
-
-                            match res
+                            Err(err) =>
                             {
 
-                                Ok(val) =>
-                                {
+                                the_res = Err(err.to_string());
 
-                                    detected_type_instance_variant = format!("TypeInstance::Char(\'{}\')", val);
-
-                                    the_res = Ok(TypeInstance::Char(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::F32(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = f32::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::F32({})", val);
-
-                                    the_res = Ok(TypeInstance::F32(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::F64(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = f64::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::F64({})", val);
-
-                                    the_res = Ok(TypeInstance::F64(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::I8(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = i8::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::I8({})", val);
-
-                                    the_res = Ok(TypeInstance::I8(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::I16(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = i16::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::I16({})", val);
-
-                                    the_res = Ok(TypeInstance::I16(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::I32(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = i32::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::I32({})", val);
-
-                                    the_res = Ok(TypeInstance::I32(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::I64(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = i64::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::I64({})", val);
-
-                                    the_res = Ok(TypeInstance::I64(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::I128(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = i128::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::I128({})", val);
-
-                                    the_res = Ok(TypeInstance::I128(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::U8(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = u8::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::U8({})", val);
-
-                                    the_res = Ok(TypeInstance::U8(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::U16(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = u16::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::U16({})", val);
-
-                                    the_res = Ok(TypeInstance::U16(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::U32(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = u32::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::U32({})", val);
-
-                                    the_res = Ok(TypeInstance::U32(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::U64(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = u64::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::U64({})", val);
-
-                                    the_res = Ok(TypeInstance::U64(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::U128(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = u128::from_str(value_input_str);
-
-                            match res
-                            {
-
-                                Ok(val) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::U128({})", val);
-
-                                    the_res = Ok(TypeInstance::U128(val));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::String(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            detected_type_instance_variant = format!("TypeInstance::String(\"{}\")", value_input_str);
-
-                            the_res = Ok(TypeInstance::String(value_input_str.to_string()));
-
-                        }
-                        TypeInstance::Whatever(_) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_visible();
-
-                            //let res: Result<Whatever, String> = Ok(Whatever::default());
-
-                            //let whatever_string;
-
-                            let whatever_object = self.whatever_strs_dropdown.selected_item().expect("Error: Unexpected Item");
- 
-                            let whatever_string_object = whatever_object.downcast_ref::<StringObject>().expect("Error: Cannot cast to StringObject");
-
-                            let whatever_string = whatever_string_object.string();
-
-                            let res = try_set_specific_whatever( &whatever_string, value_input_str);
-
-                            match res
-                            {
-
-                                Ok((whatever, detected_variant)) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::Whatever({})", detected_variant);
-
-                                    the_res = Ok(TypeInstance::Whatever(whatever));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err.to_string());
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::VecBool(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecBool({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecBool(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-
-                            }
-
-                        }
-                        TypeInstance::VecF32(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecF32({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecF32(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecF64(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecF64({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecF64(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecI8(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecI8({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecI8(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecI16(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecI16({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecI16(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecI32(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecI32({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecI32(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecI64(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecI64({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecI64(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecI128(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecI128({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecI128(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecU8(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecU8({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecU8(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecU16(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecU16({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecU16(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecU32(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecU32({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecU32(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecU64(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecU64({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecU64(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
-                            }
-
-                        }
-                        TypeInstance::VecU128(mut vec) =>
-                        {
-
-                            self.set_whatever_strs_dropdown_box_invisible();
-
-                            let res = parse_array(value_input_str, &mut vec);
-
-                            match res
-                            {
-
-                                Ok(_) =>
-                                {
-
-                                    detected_type_instance_variant = format!("TypeInstance::VecU128({:?})", vec);
-
-                                    the_res = Ok(TypeInstance::VecU128(vec));
-
-                                }
-                                Err(err) =>
-                                {
-
-                                    the_res = Err(err);
-
-                                }
-                                
                             }
 
                         }
 
                     }
-
-                    match the_res
+                    TypeInstance::Char(_) =>
                     {
 
-                        Ok(res) =>
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = char::from_str(value_input_str);
+
+                        match res
                         {
 
-                            self.detected_type_instance_variant.buffer().set_text(&detected_type_instance_variant);
-
-                            self.all_or_not_type_instance.set(Ok(AllOrNot::NotAll(res)));
-
-                            self.on_type_instance_str_selected.raise();
-
-                        }
-                        Err(error_message) =>
-                        {
-
-                            self.detected_type_instance_variant.buffer().set_text(&error_message);
-
-                            self.all_or_not_type_instance.set(Err(error_message));
-
-                            self.all_or_not_type_instance.borrow(|store|
+                            Ok(val) =>
                             {
 
-                                if let Err(message) = &*store
-                                {
+                                detected_type_instance_variant = format!("TypeInstance::Char(\'{}\')", val);
 
-                                    self.on_value_input_parse_error.raise(message);
+                                the_res = Ok(TypeInstance::Char(val));
 
-                                }
+                            }
+                            Err(err) =>
+                            {
 
-                            })
+                                the_res = Err(err.to_string());
+
+                            }
 
                         }
 
-                    }            
+                    }
+                    TypeInstance::F32(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = f32::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::F32({})", val);
+
+                                the_res = Ok(TypeInstance::F32(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::F64(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = f64::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::F64({})", val);
+
+                                the_res = Ok(TypeInstance::F64(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::I8(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = i8::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::I8({})", val);
+
+                                the_res = Ok(TypeInstance::I8(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::I16(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = i16::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::I16({})", val);
+
+                                the_res = Ok(TypeInstance::I16(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::I32(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = i32::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::I32({})", val);
+
+                                the_res = Ok(TypeInstance::I32(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::I64(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = i64::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::I64({})", val);
+
+                                the_res = Ok(TypeInstance::I64(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::I128(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = i128::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::I128({})", val);
+
+                                the_res = Ok(TypeInstance::I128(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::U8(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = u8::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::U8({})", val);
+
+                                the_res = Ok(TypeInstance::U8(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::U16(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = u16::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::U16({})", val);
+
+                                the_res = Ok(TypeInstance::U16(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::U32(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = u32::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::U32({})", val);
+
+                                the_res = Ok(TypeInstance::U32(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::U64(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = u64::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::U64({})", val);
+
+                                the_res = Ok(TypeInstance::U64(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::U128(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = u128::from_str(value_input_str);
+
+                        match res
+                        {
+
+                            Ok(val) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::U128({})", val);
+
+                                the_res = Ok(TypeInstance::U128(val));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::String(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        detected_type_instance_variant = format!("TypeInstance::String(\"{}\")", value_input_str);
+
+                        the_res = Ok(TypeInstance::String(value_input_str.to_string()));
+
+                    }
+                    TypeInstance::Whatever(_) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_visible();
+
+                        //let res: Result<Whatever, String> = Ok(Whatever::default());
+
+                        //let whatever_string;
+
+                        let whatever_object = self.whatever_strs_dropdown.selected_item().expect("Error: Unexpected Item");
+
+                        let whatever_string_object = whatever_object.downcast_ref::<StringObject>().expect("Error: Cannot cast to StringObject");
+
+                        let whatever_string = whatever_string_object.string();
+
+                        let res = try_set_specific_whatever( &whatever_string, value_input_str);
+
+                        match res
+                        {
+
+                            Ok((whatever, detected_variant)) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::Whatever({})", detected_variant);
+
+                                the_res = Ok(TypeInstance::Whatever(whatever));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err.to_string());
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::VecBool(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecBool({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecBool(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+
+                        }
+
+                    }
+                    TypeInstance::VecF32(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecF32({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecF32(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecF64(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecF64({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecF64(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecI8(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecI8({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecI8(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecI16(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecI16({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecI16(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecI32(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecI32({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecI32(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecI64(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecI64({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecI64(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecI128(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecI128({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecI128(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecU8(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecU8({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecU8(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecU16(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecU16({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecU16(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecU32(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecU32({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecU32(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecU64(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecU64({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecU64(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
+                    TypeInstance::VecU128(mut vec) =>
+                    {
+
+                        self.set_whatever_strs_dropdown_box_invisible();
+
+                        let res = parse_array(value_input_str, &mut vec);
+
+                        match res
+                        {
+
+                            Ok(_) =>
+                            {
+
+                                detected_type_instance_variant = format!("TypeInstance::VecU128({:?})", vec);
+
+                                the_res = Ok(TypeInstance::VecU128(vec));
+
+                            }
+                            Err(err) =>
+                            {
+
+                                the_res = Err(err);
+
+                            }
+                            
+                        }
+
+                    }
 
                 }
-                Err(err) =>
+
+                match the_res
                 {
 
-                    panic!("{}", err)
+                    Ok(res) =>
+                    {
+
+                        self.detected_type_instance_variant.buffer().set_text(&detected_type_instance_variant);
+
+                        self.type_instance_result.set(Ok(res));
+
+                        self.on_type_instance_str_selected.raise();
+
+                    }
+                    Err(error_message) =>
+                    {
+
+                        self.detected_type_instance_variant.buffer().set_text(&error_message);
+
+                        self.type_instance_result.set(Err(error_message));
+
+                        self.type_instance_result.borrow(|store|
+                        {
+
+                            if let Err(message) = &*store
+                            {
+
+                                self.on_value_input_parse_error.raise(message);
+
+                            }
+
+                        })
+
+                    }        
 
                 }
+      
+            }
+            Err(err) =>
+            {
+
+                panic!("{}", err)
 
             }
             

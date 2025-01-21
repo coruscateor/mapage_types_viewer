@@ -46,7 +46,7 @@ use serde_json::to_string_pretty;
 
 use crate::actors::{MapageTypeActorInputMessage, MapageTypeActorOutputMessage, MapageTypeActorState};
 
-use crate::{AllOrNot, ApplicationState, SupportedType, SupportedTypeSubContents, TypeInstanceSubContents, WhateverSubContents};
+use crate::{AllOrNot, ApplicationState, SupportedType, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents};
 
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
@@ -95,10 +95,10 @@ pub struct WindowContentsState
     actor_poller: RcSimpleTimeOut<Weak<WindowContentsState>>,
     output_format_dropdown: DropDown,
     run_button: Button,
-    supported_type_sub_contents: Rc<SupportedTypeSubContents>,
+    supported_type_sub_contents: Rc<AllOrNotSupportedTypeSubContents<Self>>,
     new_window_button: Button,
-    whatever_sub_contents: Rc<WhateverSubContents>,
-    type_instance_sub_contents: Rc<TypeInstanceSubContents>
+    whatever_sub_contents: Rc<AllOrNotWhateverSubContents<Self>>,
+    type_instance_sub_contents: Rc<AllOrNotTypeInstanceSubContents<Self>>
 
 }
 
@@ -210,7 +210,7 @@ impl WindowContentsState
 
         //SupportedType
 
-        let supported_type_sub_contents = SupportedTypeSubContents::new();
+        let supported_type_sub_contents = AllOrNotSupportedTypeSubContents::new();
 
         //input_contents_box.append(&supported_type_sub_contents);
 
@@ -218,13 +218,13 @@ impl WindowContentsState
 
         //Whatever
 
-        let whatever_sub_contents = WhateverSubContents::new();
+        let whatever_sub_contents = AllOrNotWhateverSubContents::new();
 
         input_contents_box.append(whatever_sub_contents.widget_ref());
 
         //TypeInstance
 
-        let type_instance_sub_contents = TypeInstanceSubContents::new();
+        let type_instance_sub_contents = AllOrNotTypeInstanceSubContents::new();
 
         input_contents_box.append(type_instance_sub_contents.widget_ref());
 
@@ -439,142 +439,142 @@ impl WindowContentsState
             //try_up_rc(&weak_self_moved, |this|
             //{
 
-                if let Some(item) = mapage_types_dropdown.selected_item()
+            if let Some(item) = mapage_types_dropdown.selected_item()
+            {
+
+                if let Some(item) = item.downcast_ref::<StringObject>()
                 {
 
-                    if let Some(item) = item.downcast_ref::<StringObject>()
+                    let item_string = item.string();
+
+                    if item_string == "*"
                     {
 
-                        let item_string = item.string();
-
-                        if item_string == "*"
+                        this.mut_state.borrow_mut(|mut state|
                         {
 
-                            this.mut_state.borrow_mut(|mut state|
-                            {
+                            state.all_or_not_mapage_type = AllOrNot::All;
 
-                                state.all_or_not_mapage_type = AllOrNot::All;
+                            //this.text_output.buffer().set_text("");
 
-                                //this.text_output.buffer().set_text("");
+                            this.clear_text_output();
 
-                                this.clear_text_output();
+                        });
 
-                            });
+                    }
+                    else
+                    {
 
-                        }
-                        else
+                        let from_str_res = MapageType::from_str(&item_string);
+
+                        match from_str_res
                         {
 
-                            let from_str_res = MapageType::from_str(&item_string);
-
-                            match from_str_res
+                            Ok(res) =>
                             {
-    
-                                Ok(res) =>
+
+                                this.mut_state.borrow_mut(|mut state|
                                 {
-    
-                                    this.mut_state.borrow_mut(|mut state|
+
+                                    state.all_or_not_mapage_type = AllOrNot::NotAll(res);
+
+                                    //this.text_output.buffer().set_text("");
+
+                                    this.clear_text_output();
+
+                                    match res
                                     {
-    
-                                        state.all_or_not_mapage_type = AllOrNot::NotAll(res);
-    
-                                        //this.text_output.buffer().set_text("");
 
-                                        this.clear_text_output();
-
-                                        match res
+                                        MapageType::SupportedType =>
                                         {
 
-                                            MapageType::SupportedType =>
-                                            {
+                                            this.supported_type_sub_contents.widget_ref().set_visible(true);
 
-                                                this.supported_type_sub_contents.widget_ref().set_visible(true);
+                                            this.whatever_sub_contents.widget_ref().set_visible(false);
 
-                                                this.whatever_sub_contents.widget_ref().set_visible(false);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
-
-                                            }
-                                            MapageType::Whatever =>
-                                            {
-
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
-
-                                                this.whatever_sub_contents.widget_ref().set_visible(true);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
-
-                                            }
-                                            MapageType::TypeInstance =>
-                                            {
-
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
-
-                                                this.whatever_sub_contents.widget_ref().set_visible(false);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(true);
-
-                                            }
-                                            MapageType::Command =>
-                                            {
-
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
-
-                                                this.whatever_sub_contents.widget_ref().set_visible(false);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
-
-                                            }
-                                            MapageType::CommandResult =>
-                                            {
-
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
-
-                                                this.whatever_sub_contents.widget_ref().set_visible(false);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
-
-                                            }
-                                            MapageType::CommandError =>
-                                            {
-
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
-
-                                                this.whatever_sub_contents.widget_ref().set_visible(false);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
-
-                                            }
-                                            MapageType::StreamedMessage =>
-                                            {
-
-                                                this.supported_type_sub_contents.widget_ref().set_visible(false);
-
-                                                this.whatever_sub_contents.widget_ref().set_visible(false);
-
-                                                this.type_instance_sub_contents.widget_ref().set_visible(false);
-
-                                            }
+                                            this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                         }
-    
-                                    })
-    
-                                }
-                                Err(err) =>
-                                {
-    
-                                    this.output_error(err);
-    
-                                }
-    
-                            }
-                            
-                        }
+                                        MapageType::Whatever =>
+                                        {
 
+                                            this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            this.whatever_sub_contents.widget_ref().set_visible(true);
+
+                                            this.type_instance_sub_contents.widget_ref().set_visible(false);
+
+                                        }
+                                        MapageType::TypeInstance =>
+                                        {
+
+                                            this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                            this.type_instance_sub_contents.widget_ref().set_visible(true);
+
+                                        }
+                                        MapageType::Command =>
+                                        {
+
+                                            this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                            this.type_instance_sub_contents.widget_ref().set_visible(false);
+
+                                        }
+                                        MapageType::CommandResult =>
+                                        {
+
+                                            this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                            this.type_instance_sub_contents.widget_ref().set_visible(false);
+
+                                        }
+                                        MapageType::CommandError =>
+                                        {
+
+                                            this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                            this.type_instance_sub_contents.widget_ref().set_visible(false);
+
+                                        }
+                                        MapageType::StreamedMessage =>
+                                        {
+
+                                            this.supported_type_sub_contents.widget_ref().set_visible(false);
+
+                                            this.whatever_sub_contents.widget_ref().set_visible(false);
+
+                                            this.type_instance_sub_contents.widget_ref().set_visible(false);
+
+                                        }
+
+                                    }
+
+                                })
+
+                            }
+                            Err(err) =>
+                            {
+
+                                this.output_error(err);
+
+                            }
+
+                        }
+                        
                     }
 
                 }
+
+            }
 
             //} //);
 
@@ -836,7 +836,7 @@ impl WindowContentsState
 
         let all_or_not_type_instance;
 
-        if let Ok(res) = self.whatever_sub_contents.all_or_not_whatever()
+        if let Ok(res) = self.whatever_sub_contents.all_or_not_whatever_result()
         {
 
             all_or_not_whatever = res;
@@ -851,7 +851,7 @@ impl WindowContentsState
             
         }
 
-        if let Ok(res) = self.type_instance_sub_contents.all_or_not_type_instance()
+        if let Ok(res) = self.type_instance_sub_contents.all_or_not_type_instance_result()
         {
 
             all_or_not_type_instance = res;
@@ -894,7 +894,7 @@ impl WindowContentsState
     fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        match self.whatever_sub_contents.all_or_not_whatever()
+        match self.whatever_sub_contents.all_or_not_whatever_result()
         {
 
             Ok(res) =>
@@ -936,7 +936,7 @@ impl WindowContentsState
     fn send_process_type_instance_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        match self.type_instance_sub_contents.all_or_not_type_instance()
+        match self.type_instance_sub_contents.all_or_not_type_instance_result()
         {
 
             Ok(res) =>

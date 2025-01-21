@@ -20,25 +20,41 @@ mod all_or_not;
 
 pub use all_or_not::*;
 
-mod supported_type_sub_contents;
+mod all_or_not_supported_type_sub_contents;
 
-pub use supported_type_sub_contents::*;
+pub use all_or_not_supported_type_sub_contents::*;
 
-mod whatever_sub_contents;
+mod all_or_not_whatever_sub_contents;
 
-pub use whatever_sub_contents::*;
+pub use all_or_not_whatever_sub_contents::*;
 
 mod tab_indenter;
 
 pub use tab_indenter::*;
 
-mod type_instance_sub_contents;
+mod all_or_not_type_instance_sub_contents;
 
-pub use type_instance_sub_contents::*;
+pub use all_or_not_type_instance_sub_contents::*;
 
 mod whatever_shared;
 
 pub use whatever_shared::*;
+
+mod command_sub_contents;
+
+pub use command_sub_contents::*;
+
+mod supported_type_sub_contents;
+
+pub use  supported_type_sub_contents::*;
+
+mod type_instance_sub_contents;
+
+pub use type_instance_sub_contents::*;
+
+mod whatever_sub_contents;
+
+pub use whatever_sub_contents::*;
 
 fn main()
 {

@@ -2,7 +2,7 @@ use std::{cell::Cell, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{gtk4::prelude::{BoxExt, Cast, WidgetExt}};
 
-use crate::{widgets::{new_supported_type_strs_dropdown, new_supported_type_strs_no_all_dropdown}, SupportedType};
+use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, WindowContentsState};
 
 use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc};
 
@@ -12,18 +12,18 @@ use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, W
 
 use gtk_estate::gtk4::glib::clone;
 
-pub struct SupportedTypeSubContents<P>
+pub struct AllOrNotSupportedTypeSubContents<P>
     where P: 'static
 {
 
     supported_type_strs_dropdown: DropDown,
     supported_type_box: Box,
-    supported_type: Cell<SupportedType>,
+    all_or_not_supported_type: Cell<AllOrNot<SupportedType>>,
     on_supported_type_str_selected: SingleSubEvent<Self, P>
 
 }
 
-impl<P> SupportedTypeSubContents<P>
+impl<P> AllOrNotSupportedTypeSubContents<P>
     where P: 'static
 {
 
@@ -40,7 +40,7 @@ impl<P> SupportedTypeSubContents<P>
 
         //
 
-        let supported_type_strs_dropdown = new_supported_type_strs_no_all_dropdown();
+        let supported_type_strs_dropdown = new_supported_type_strs_dropdown();
 
         supported_type_strs_dropdown.set_width_request(120);
 
@@ -62,15 +62,20 @@ impl<P> SupportedTypeSubContents<P>
 
                 supported_type_strs_dropdown,
                 supported_type_box,
-                supported_type: Cell::new(SupportedType::Bool),
+                all_or_not_supported_type: Cell::new(AllOrNot::All),
                 on_supported_type_str_selected: SingleSubEvent::new(weak_self)
 
             }
         
         });
 
+        //let weak = this.downgrade();
+
         this.supported_type_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |supported_type_strs_dropdown|
         {
+
+            //try_up_rc(&weak, |this|
+            //{
 
             if let Some(item) = supported_type_strs_dropdown.selected_item()
             {
@@ -80,31 +85,46 @@ impl<P> SupportedTypeSubContents<P>
 
                     let item_string = item.string();
 
-                    let from_str_res = SupportedType::from_str(&item_string);
-
-                    match from_str_res
+                    if item_string == "*"
                     {
 
-                        Ok(res) =>
+                        this.all_or_not_supported_type.set(AllOrNot::All);
+
+                        this.on_supported_type_str_selected.raise();
+
+                    }
+                    else
+                    {
+
+                        let from_str_res = SupportedType::from_str(&item_string);
+
+                        match from_str_res
                         {
 
-                            this.supported_type.set(res);
+                            Ok(res) =>
+                            {
 
-                            this.on_supported_type_str_selected.raise();
+                                this.all_or_not_supported_type.set(AllOrNot::NotAll(res));
+
+                                this.on_supported_type_str_selected.raise();
+
+                            }
+                            Err(err) =>
+                            {
+
+                                panic!("{}", err)
+
+                            }
 
                         }
-                        Err(err) =>
-                        {
-
-                            panic!("{}", err)
-
-                        }
-
+                        
                     }
 
                 }
 
             }
+
+            //});
 
         }));
 
@@ -119,16 +139,32 @@ impl<P> SupportedTypeSubContents<P>
 
     }
 
-    pub fn supported_type(&self) -> SupportedType
+    pub fn all_or_not_supported_type(&self) -> AllOrNot<SupportedType>
     {
 
-        self.supported_type.get()
+        self.all_or_not_supported_type.get()
 
     }
 
-    impl_pub_single_sub_event_method!(on_supported_type_str_selected, P);
+    impl_pub_single_sub_event_method!(on_supported_type_str_selected, P); //WindowContentsState);
 
 }
+
+/*
+impl Deref for SupportedTypeSubContents
+{
+
+    type Target = Widget;
+
+    fn deref(&self) -> &Self::Target
+    {
+
+        self.supported_type_box.upcast_ref::<Widget>()
+
+    }
+
+}
+*/
 
 
 
