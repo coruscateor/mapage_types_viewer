@@ -56,6 +56,10 @@ mod whatever_sub_contents;
 
 pub use whatever_sub_contents::*;
 
+mod optional_value_sub_contents;
+
+pub use optional_value_sub_contents::*;
+
 fn main()
 {
 
