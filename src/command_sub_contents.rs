@@ -1,6 +1,6 @@
 use std::{cell::Cell, ops::Deref, process::Command, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text};
+use gtk_estate::{gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, WidgetContainer};
 
 use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, SupportedTypeSubContents, WindowContentsState};
 
@@ -12,14 +12,16 @@ use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, W
 
 use gtk_estate::gtk4::glib::clone;
 
+use crate::OptionalValueSubContents;
+
 pub struct CommandSubContents
 {
 
-    result_command: RefCellStore<Result<Command, String>>,
+    command_result: RefCellStore<Result<Command, String>>,
     id_text: Text,
-    type_name_check_button: CheckButton,
-    type_name_sub_contents: SupportedTypeSubContents<Self>,
-    params_check_button: CheckButton,
+    //type_name_check_button: CheckButton,
+    optional_type_name_sub_contents: OptionalValueSubContents<SupportedTypeSubContents<Self>>,
+    //params_check_button: CheckButton,
 
 }
 
@@ -29,19 +31,25 @@ impl CommandSubContents
     pub fn new() -> Rc<Self>
     {
 
-        let command_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
 
         //
 
         let id_text_label = Label::builder().label("id").halign(Align::Start).build();
 
-        command_box.append(&id_text_label);
+        contents_box.append(&id_text_label);
 
         //
 
         let id_text = Text::new();
 
-        command_box.append(&id_text);
+        contents_box.append(&id_text);
+
+        //
+
+        let optional_type_name_sub_contents = OptionalValueSubContents::new(SupportedTypeSubContents::new());
+
+        contents_box.append(optional_type_name_sub_contents.widget_ref());
 
         //
 
@@ -49,7 +57,7 @@ impl CommandSubContents
 
         supported_type_strs_dropdown_box.append(&supported_type_strs_dropdown);
 
-        command_box.append(&supported_type_strs_dropdown_box);
+        contents_box.append(&supported_type_strs_dropdown_box);
 
         //
 
@@ -60,7 +68,7 @@ impl CommandSubContents
             {
 
                 supported_type_strs_dropdown,
-                command_box,
+                contents_box,
                 all_or_not_supported_type: Cell::new(AllOrNot::All),
                 on_supported_type_str_selected: SingleSubEvent::new(weak_self)
 
@@ -131,19 +139,14 @@ impl CommandSubContents
 
     }
 
+    /*
     pub fn widget_ref(&self) -> &Box
     {
 
         &self.command_box
 
     }
-
-    pub fn all_or_not_supported_type(&self) -> AllOrNot<SupportedType>
-    {
-
-        self.all_or_not_supported_type.get()
-
-    }
+    */
 
     impl_pub_single_sub_event_method!(on_supported_type_str_selected, WindowContentsState);
 

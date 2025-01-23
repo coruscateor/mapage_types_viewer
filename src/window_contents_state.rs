@@ -12,6 +12,7 @@ use corlib::cell::borrow_mut;
 use corlib::inc_dec::IncDecSelf;
 use corlib::upgrading::{try_up_rc, try_up_rc_pt, up_rc, up_rc_pt};
 
+use corlib::value::HasValueGetter;
 use corlib::NonOption;
 
 use gtk_estate::adw::gdk::Display;
@@ -33,7 +34,7 @@ use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 use gtk_estate::gtk4::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
 
-use gtk_estate::{impl_weak_self_methods, scs_add, RcWidgetAdapter, StateContainers, StoredWidgetObject, WidgetAdapter, WidgetStateContainer, DynWidgetStateContainer, impl_widget_state_container_traits, RcSimpleTimeOut, SimpleTimeOut};
+use gtk_estate::{impl_weak_self_methods, impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, RcSimpleTimeOut, RcWidgetAdapter, SimpleTimeOut, StateContainers, StoredWidgetObject, WidgetAdapter, WidgetContainer, WidgetStateContainer};
 
 use gtk_estate::gtk4::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
 
@@ -830,13 +831,13 @@ impl WindowContentsState
     fn send_process_all_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        let all_or_not_supported_type = self.supported_type_sub_contents.all_or_not_supported_type();
+        let all_or_not_supported_type = self.supported_type_sub_contents.value();
 
         let all_or_not_whatever;
 
         let all_or_not_type_instance;
 
-        if let Ok(res) = self.whatever_sub_contents.all_or_not_whatever_result()
+        if let Ok(res) = self.whatever_sub_contents.value()
         {
 
             all_or_not_whatever = res;
@@ -851,7 +852,7 @@ impl WindowContentsState
             
         }
 
-        if let Ok(res) = self.type_instance_sub_contents.all_or_not_type_instance_result()
+        if let Ok(res) = self.type_instance_sub_contents.value()
         {
 
             all_or_not_type_instance = res;
@@ -885,7 +886,7 @@ impl WindowContentsState
     fn send_process_supported_type_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, self.supported_type_sub_contents.all_or_not_supported_type());
+        let input_message = MapageTypeActorInputMessage::ProcessSupportedType(state.output_format, self.supported_type_sub_contents.value());
 
         self.io_client.input_sender_ref().try_send(input_message)
 
@@ -894,7 +895,7 @@ impl WindowContentsState
     fn send_process_whatever_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        match self.whatever_sub_contents.all_or_not_whatever_result()
+        match self.whatever_sub_contents.value()
         {
 
             Ok(res) =>
@@ -936,7 +937,7 @@ impl WindowContentsState
     fn send_process_type_instance_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
     {
 
-        match self.type_instance_sub_contents.all_or_not_type_instance_result()
+        match self.type_instance_sub_contents.value()
         {
 
             Ok(res) =>

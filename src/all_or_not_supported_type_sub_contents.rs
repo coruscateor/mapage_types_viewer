@@ -1,10 +1,10 @@
 use std::{cell::Cell, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{gtk4::prelude::{BoxExt, Cast, WidgetExt}};
+use gtk_estate::{gtk4::prelude::{BoxExt, Cast, WidgetExt}, impl_contents_box_ref, WidgetContainer};
 
-use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, WindowContentsState};
+use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, TypeInstance, WindowContentsState};
 
-use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc};
+use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc, value::HasValueGetter};
 
 use corlib::events::SingleSubEvent; 
 
@@ -17,7 +17,7 @@ pub struct AllOrNotSupportedTypeSubContents<P>
 {
 
     supported_type_strs_dropdown: DropDown,
-    supported_type_box: Box,
+    contents_box: Box,
     all_or_not_supported_type: Cell<AllOrNot<SupportedType>>,
     on_supported_type_str_selected: SingleSubEvent<Self, P>
 
@@ -30,13 +30,13 @@ impl<P> AllOrNotSupportedTypeSubContents<P>
     pub fn new() -> Rc<Self>
     {
 
-        let supported_type_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
 
         //
 
         let label = Label::builder().label("SupportedType").halign(Align::Start).build();
 
-        supported_type_box.append(&label);
+        contents_box.append(&label);
 
         //
 
@@ -50,7 +50,7 @@ impl<P> AllOrNotSupportedTypeSubContents<P>
 
         supported_type_strs_dropdown_box.append(&supported_type_strs_dropdown);
 
-        supported_type_box.append(&supported_type_strs_dropdown_box);
+        contents_box.append(&supported_type_strs_dropdown_box);
 
         //
 
@@ -61,7 +61,7 @@ impl<P> AllOrNotSupportedTypeSubContents<P>
             {
 
                 supported_type_strs_dropdown,
-                supported_type_box,
+                contents_box,
                 all_or_not_supported_type: Cell::new(AllOrNot::All),
                 on_supported_type_str_selected: SingleSubEvent::new(weak_self)
 
@@ -132,6 +132,9 @@ impl<P> AllOrNotSupportedTypeSubContents<P>
 
     }
 
+    impl_contents_box_ref!();
+
+    /*
     pub fn widget_ref(&self) -> &Box
     {
 
@@ -145,8 +148,42 @@ impl<P> AllOrNotSupportedTypeSubContents<P>
         self.all_or_not_supported_type.get()
 
     }
+    */
 
     impl_pub_single_sub_event_method!(on_supported_type_str_selected, P); //WindowContentsState);
+
+}
+
+impl<P> WidgetContainer for AllOrNotSupportedTypeSubContents<P>
+{
+
+    fn widget(&self) -> Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>().clone()
+        
+    }
+
+    fn widget_ref(&self) -> &Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>()
+        
+    }
+
+}
+
+impl<P> HasValueGetter for AllOrNotSupportedTypeSubContents<P>
+{
+
+    type HasValueType = AllOrNot<SupportedType>;
+
+    fn value(&self) -> Self::HasValueType
+    {
+
+        self.all_or_not_supported_type.get()
+
+    }
 
 }
 

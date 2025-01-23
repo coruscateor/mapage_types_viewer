@@ -1,10 +1,10 @@
 use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
+use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}, impl_contents_box_ref, WidgetContainer};
 
 use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
 
-use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
+use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc, value::HasValueGetter};
 
 use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent}; 
 
@@ -21,7 +21,7 @@ pub struct AllOrNotTypeInstanceSubContents<P>
     type_instance_strs_dropdown: DropDown,
     whatever_strs_dropdown_box: Box,
     whatever_strs_dropdown: DropDown,
-    type_instance_box: Box,
+    contents_box: Box,
     all_or_not_type_instance_result: RefCellStore<Result<AllOrNot<TypeInstance>, String>>,
     on_type_instance_str_selected: SingleSubEvent<Self, P>,
     value_input: TextView,
@@ -37,13 +37,13 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
     pub fn new() -> Rc<Self>
     {
 
-        let type_instance_box = Box::builder().orientation(Orientation::Vertical).spacing(6).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(6).visible(true).build();
 
         //
 
         let label = Label::builder().label("TypeInstance").halign(Align::Start).build();
 
-        type_instance_box.append(&label);
+        contents_box.append(&label);
 
         //
 
@@ -55,7 +55,7 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
 
         type_instance_strs_dropdown_box.append(&type_instance_strs_dropdown);
 
-        type_instance_box.append(&type_instance_strs_dropdown_box);
+        contents_box.append(&type_instance_strs_dropdown_box);
 
         //Whatever
 
@@ -67,13 +67,13 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
 
         whatever_strs_dropdown_box.append(&whatever_strs_dropdown);
 
-        type_instance_box.append(&whatever_strs_dropdown_box);
+        contents_box.append(&whatever_strs_dropdown_box);
 
         //
 
         let value_input_label = Label::builder().label("Value Input").halign(Align::Start).build();
 
-        type_instance_box.append(&value_input_label);
+        contents_box.append(&value_input_label);
 
         //
 
@@ -81,13 +81,13 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
 
         let value_input_sw = ScrolledWindow::builder().child(&value_input).build();
 
-        type_instance_box.append(&value_input_sw);
+        contents_box.append(&value_input_sw);
 
         //
 
         let detected_whatever_variant_label = Label::builder().label("Detected Variant Or Variants").halign(Align::Start).build();
 
-        type_instance_box.append(&detected_whatever_variant_label);
+        contents_box.append(&detected_whatever_variant_label);
 
         //
 
@@ -97,7 +97,7 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
 
         let detected_type_instance_variant_sw = ScrolledWindow::builder().child(&detected_type_instance_variant).build();
 
-        type_instance_box.append(&detected_type_instance_variant_sw);
+        contents_box.append(&detected_type_instance_variant_sw);
 
         detected_type_instance_variant.buffer().set_text("All Variants");
 
@@ -112,7 +112,7 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
                 type_instance_strs_dropdown,
                 whatever_strs_dropdown_box,
                 whatever_strs_dropdown,
-                type_instance_box,
+                contents_box,
                 all_or_not_type_instance_result: RefCellStore::new(Ok(AllOrNot::All)),
                 on_type_instance_str_selected: SingleSubEvent::new(weak_self),
                 value_input,
@@ -176,10 +176,13 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
 
     }
 
+    impl_contents_box_ref!();
+
     impl_pub_single_sub_event_method!(on_type_instance_str_selected, P);
 
     impl_pub_single_sub_args_event_method!(on_value_input_parse_error, String, P);
 
+    /*
     pub fn widget_ref(&self) -> &Box
     {
 
@@ -193,6 +196,7 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
         self.all_or_not_type_instance_result.get()
 
     }
+    */
 
     fn set_whatever_strs_dropdown_box_invisible(&self)
     {
@@ -1107,6 +1111,39 @@ impl<P> AllOrNotTypeInstanceSubContents<P>
             }
             
         }
+
+    }
+
+}
+
+impl<P> WidgetContainer for AllOrNotTypeInstanceSubContents<P>
+{
+
+    fn widget(&self) -> Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>().clone()
+        
+    }
+
+    fn widget_ref(&self) -> &Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>()
+        
+    }
+
+}
+
+impl<P> HasValueGetter for AllOrNotTypeInstanceSubContents<P>
+{
+
+    type HasValueType = Result<AllOrNot<TypeInstance>, String>;
+
+    fn value(&self) -> Self::HasValueType
+    {
+
+        self.all_or_not_type_instance_result.get()
 
     }
 

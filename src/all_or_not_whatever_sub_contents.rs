@@ -1,10 +1,10 @@
 use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}};
+use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}, impl_contents_box_ref, WidgetContainer};
 
 use crate::{widgets::new_whatever_strs_dropdown, AllOrNot, Whatever, WindowContentsState};
 
-use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc};
+use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc, value::HasValueGetter};
 
 use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent}; 
 
@@ -19,7 +19,7 @@ pub struct AllOrNotWhateverSubContents<P>
 {
 
     whatever_strs_dropdown: DropDown,
-    whatever_box: Box,
+    contents_box: Box,
     all_or_not_whatever_result: RefCellStore<Result<AllOrNot<Whatever>, String>>, //RefCellStore<AllOrNot<Whatever>>,
     on_whatever_str_selected: SingleSubEvent<Self, WindowContentsState>, //SingleSubArgsEvent<Self, AllOrNot<Whatever>, WindowContentsState>,
     value_input: TextView,
@@ -35,13 +35,13 @@ impl<P> AllOrNotWhateverSubContents<P>
     pub fn new() -> Rc<Self>
     {
 
-        let whatever_box = Box::builder().orientation(Orientation::Vertical).spacing(6).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(6).visible(true).build();
 
         //
 
         let label = Label::builder().label("Whatever").halign(Align::Start).build();
 
-        whatever_box.append(&label);
+        contents_box.append(&label);
 
         //
 
@@ -53,13 +53,13 @@ impl<P> AllOrNotWhateverSubContents<P>
 
         whatever_strs_dropdown_box.append(&whatever_strs_dropdown);
 
-        whatever_box.append(&whatever_strs_dropdown_box);
+        contents_box.append(&whatever_strs_dropdown_box);
 
         //
 
         let value_input_label = Label::builder().label("Value Input").halign(Align::Start).build();
 
-        whatever_box.append(&value_input_label);
+        contents_box.append(&value_input_label);
 
         //
 
@@ -67,13 +67,13 @@ impl<P> AllOrNotWhateverSubContents<P>
 
         let value_input_sw = ScrolledWindow::builder().child(&value_input).build();
 
-        whatever_box.append(&value_input_sw);
+        contents_box.append(&value_input_sw);
 
         //
 
         let detected_whatever_variant_label = Label::builder().label("Detected Variant Or Variants").halign(Align::Start).build();
 
-        whatever_box.append(&detected_whatever_variant_label);
+        contents_box.append(&detected_whatever_variant_label);
 
         //
 
@@ -83,7 +83,7 @@ impl<P> AllOrNotWhateverSubContents<P>
 
         let detected_whatever_variant_sw = ScrolledWindow::builder().child(&detected_whatever_variant).build();
 
-        whatever_box.append(&detected_whatever_variant_sw);
+        contents_box.append(&detected_whatever_variant_sw);
 
         detected_whatever_variant.buffer().set_text("All Variants");
 
@@ -96,7 +96,7 @@ impl<P> AllOrNotWhateverSubContents<P>
             {
 
                 whatever_strs_dropdown,
-                whatever_box,
+                contents_box,
                 all_or_not_whatever_result: RefCellStore::new(Ok(AllOrNot::All)),
                 on_whatever_str_selected: SingleSubEvent::new(weak_self), //SingleSubArgsEvent::new(weak_self),
                 value_input,
@@ -162,6 +162,8 @@ impl<P> AllOrNotWhateverSubContents<P>
 
     }
 
+    impl_contents_box_ref!();
+
     /*
     fn parse_error_at_index(&self, index: usize, inner_message: String) //-> Result<Whatever, String>
     {
@@ -183,6 +185,7 @@ impl<P> AllOrNotWhateverSubContents<P>
 
     impl_pub_single_sub_args_event_method!(on_value_input_parse_error, String, WindowContentsState);
 
+    /*
     pub fn widget_ref(&self) -> &Box
     {
 
@@ -196,6 +199,7 @@ impl<P> AllOrNotWhateverSubContents<P>
         self.all_or_not_whatever_result.get()
 
     }
+    */
 
     /*
     fn raise_on_whatever_str_selected(&self)
@@ -1175,6 +1179,39 @@ impl<P> AllOrNotWhateverSubContents<P>
             */
 
         }
+
+    }
+
+}
+
+impl<P> WidgetContainer for AllOrNotWhateverSubContents<P>
+{
+
+    fn widget(&self) -> Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>().clone()
+        
+    }
+
+    fn widget_ref(&self) -> &Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>()
+        
+    }
+
+}
+
+impl<P> HasValueGetter for AllOrNotWhateverSubContents<P>
+{
+
+    type HasValueType = Result<AllOrNot<Whatever>, String>;
+
+    fn value(&self) -> Self::HasValueType
+    {
+
+        self.all_or_not_whatever_result.get()
 
     }
 
