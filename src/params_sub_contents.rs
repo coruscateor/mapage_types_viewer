@@ -1,6 +1,6 @@
 use std::{cell::Cell, ops::Deref, process::Command, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, WidgetContainer};
+use gtk_estate::{adw::prelude::ButtonExt, gtk4::{prelude::{BoxExt, Cast, WidgetExt}, Button, CheckButton, ScrolledWindow, Text}, WidgetContainer};
 
 use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, SupportedTypeSubContents, TypeInstance, TypeInstanceSubContents, WindowContentsState};
 
@@ -20,7 +20,9 @@ pub struct ParamsSubContents<P>
 
     params_contents_vec: RefCellStore<Vec<Rc<OptionalValueSubContents<TypeInstanceSubContents<P>>>>>,
     contents_box: Box,
-    params_contents_box: Box
+    params_contents_box: Box,
+    add_button: Button,
+    remove_button: Button
 
 }
 
@@ -35,7 +37,7 @@ impl<P> ParamsSubContents<P>
 
         //
 
-        let id_text_label = Label::builder().label("Params:").halign(Align::Start).build();
+        let id_text_label = Label::builder().label("Params").halign(Align::Start).build();
 
         contents_box.append(&id_text_label);
 
@@ -43,7 +45,23 @@ impl<P> ParamsSubContents<P>
 
         let params_contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
 
-        contents_box.append(&params_contents_box);
+        let params_contents_box_sw = ScrolledWindow::builder().child(&params_contents_box).build();
+
+        contents_box.append(&params_contents_box_sw);
+
+        //
+
+        let buttons_box = Box::builder().orientation(Orientation::Horizontal).spacing(2).build();
+
+        let add_button = Button::builder().label("add").build();
+
+        let remove_button = Button::builder().label("remove").build();
+
+        buttons_box.append(&add_button);
+
+        buttons_box.append(&remove_button);
+
+        contents_box.append(&buttons_box);
 
         //
 
@@ -55,11 +73,27 @@ impl<P> ParamsSubContents<P>
 
                 params_contents_vec: RefCellStore::new(Vec::new()),
                 contents_box,
-                params_contents_box
+                params_contents_box,
+                add_button,
+                remove_button
 
             }
         
         });
+
+        this.add_button.connect_clicked(clone!( #[strong] this, move |_button|
+        {
+
+            this.append_type_instance_contents();
+
+        }));
+
+        this.remove_button.connect_clicked(clone!( #[strong] this, move |_button|
+        {
+
+            this.remove_type_instance_contents();
+
+        }));
 
         this
 

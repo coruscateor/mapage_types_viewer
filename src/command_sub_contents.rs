@@ -1,10 +1,10 @@
-use std::{cell::Cell, ops::Deref, process::Command, rc::{Rc, Weak}, str::FromStr};
+use std::{cell::Cell, num::ParseIntError, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, WidgetContainer};
+use gtk_estate::{adw::{glib::property::PropertyGet, prelude::EntryBufferExtManual}, gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, helpers::text_view::get_text_view_string, WidgetContainer};
 
-use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, SupportedTypeSubContents, WindowContentsState};
+use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, ParamsSubContents, SupportedType, SupportedTypeSubContents, WindowContentsState};
 
-use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc};
+use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc, value::{HasOptionalValueGetter, HasValueGetter}};
 
 use corlib::events::SingleSubEvent; 
 
@@ -12,16 +12,19 @@ use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, W
 
 use gtk_estate::gtk4::glib::clone;
 
-use crate::OptionalValueSubContents;
+use crate::{OptionalValueSubContents, Command};
 
 pub struct CommandSubContents
 {
 
-    command_result: RefCellStore<Result<Command, String>>,
+    //command_result: RefCellStore<Result<Command, String>>,
     id_text: Text,
+    command_text: Text,
     //type_name_check_button: CheckButton,
-    optional_type_name_sub_contents: OptionalValueSubContents<SupportedTypeSubContents<Self>>,
+    optional_type_name_sub_contents: Rc<OptionalValueSubContents<SupportedTypeSubContents<Self>>>,
     //params_check_button: CheckButton,
+    optional_params_sub_contents: Rc<OptionalValueSubContents<ParamsSubContents<Self>>>,
+    contents_box: Box
 
 }
 
@@ -44,6 +47,19 @@ impl CommandSubContents
         let id_text = Text::new();
 
         contents_box.append(&id_text);
+        
+
+        //
+
+        let command_text_label = Label::builder().label("command").halign(Align::Start).build();
+
+        contents_box.append(&command_text_label);
+
+        //
+
+        let command_text = Text::new();
+
+        contents_box.append(&command_text);
 
         //
 
@@ -53,87 +69,26 @@ impl CommandSubContents
 
         //
 
-        let supported_type_strs_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).visible(true).build();
-
-        supported_type_strs_dropdown_box.append(&supported_type_strs_dropdown);
-
-        contents_box.append(&supported_type_strs_dropdown_box);
+        let optional_params_sub_contents = OptionalValueSubContents::new(ParamsSubContents::new());
 
         //
 
-        let this = Rc::new_cyclic(|weak_self|
+        let this = Rc::new_cyclic(|_weak_self|
         {
 
             Self
             {
 
-                supported_type_strs_dropdown,
-                contents_box,
-                all_or_not_supported_type: Cell::new(AllOrNot::All),
-                on_supported_type_str_selected: SingleSubEvent::new(weak_self)
+                //command_result,
+                id_text,
+                command_text,
+                optional_type_name_sub_contents,
+                optional_params_sub_contents,
+                contents_box
 
             }
         
         });
-
-        //let weak = this.downgrade();
-
-        this.supported_type_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |supported_type_strs_dropdown|
-        {
-
-            //try_up_rc(&weak, |this|
-            //{
-
-            if let Some(item) = supported_type_strs_dropdown.selected_item()
-            {
-
-                if let Some(item) = item.downcast_ref::<StringObject>()
-                {
-
-                    let item_string = item.string();
-
-                    if item_string == "*"
-                    {
-
-                        this.all_or_not_supported_type.set(AllOrNot::All);
-
-                        this.on_supported_type_str_selected.raise();
-
-                    }
-                    else
-                    {
-
-                        let from_str_res = SupportedType::from_str(&item_string);
-
-                        match from_str_res
-                        {
-
-                            Ok(res) =>
-                            {
-
-                                this.all_or_not_supported_type.set(AllOrNot::NotAll(res));
-
-                                this.on_supported_type_str_selected.raise();
-
-                            }
-                            Err(err) =>
-                            {
-
-                                panic!("{}", err)
-
-                            }
-
-                        }
-                        
-                    }
-
-                }
-
-            }
-
-            //});
-
-        }));
 
         this
 
@@ -148,9 +103,134 @@ impl CommandSubContents
     }
     */
 
-    impl_pub_single_sub_event_method!(on_supported_type_str_selected, WindowContentsState);
+    //impl_pub_single_sub_event_method!(on_supported_type_str_selected, WindowContentsState);
 
 }
 
 
+impl WidgetContainer for CommandSubContents
+{
+
+    fn widget(&self) -> Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>().clone()
+        
+    }
+
+    fn widget_ref(&self) -> &Widget
+    {
+
+        self.contents_box.upcast_ref::<Widget>()
+        
+    }
+
+}
+
+impl HasValueGetter for CommandSubContents
+{
+
+    type HasValueType = Result<Command, String>;
+
+    fn value(&self) -> Self::HasValueType
+    {
+
+        //id
+
+        let id_text_string = self.id_text.buffer().text(); //get_text_view_string(&self.id_text);
+
+        let id;
+
+        let trimmed_id_text_string = id_text_string.trim();
+
+        if trimmed_id_text_string.is_empty()
+        {
+
+            id = None;
+
+        }
+        else
+        {
+
+            let id_number_result = u32::from_str(trimmed_id_text_string);
+
+            match id_number_result
+            {
+
+                Ok(res) =>
+                {
+
+                    id = Some(res);
+
+                }
+                Err(err) =>
+                {
+
+                    return Err(err.to_string());
+
+                }
+
+            }
+        
+        }
+
+        //command
+
+        let command_text_string = self.command_text.buffer().text().to_string();
+
+        //type_name
+
+        let type_name = self.optional_type_name_sub_contents.value();
+
+        //params
+
+        let params;
+
+        let params_opt_result = self.optional_params_sub_contents.value();
+
+        match params_opt_result
+        {
+            
+            Some(res) =>
+            {
+
+                params = Some(res?);
+
+            }
+            None =>
+            {
+
+                params = None;
+
+            }
+
+        }
+
+        //
+
+        let command = Command::new(id, command_text_string, type_name, params);
+
+        Ok(command)
+
+    }
+
+}
+
+/*
+only traits defined in the current crate can be implemented for types defined outside of the crate
+impl doesn't have any local type before any uncovered type parameters
+for more information see https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules
+define and implement a trait or new type insteadrustcClick for full compiler diagnostic
+command_sub_contents.rs(153, 23): `ParseIntError` is not defined in the current crate
+command_sub_contents.rs(153, 6): `std::string::String` is not defined in the current crate
+*/
+
+/*
+impl From<String> for ParseIntError
+{
+
+
+
+}
+*/
 

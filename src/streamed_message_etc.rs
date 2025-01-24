@@ -199,7 +199,7 @@ impl Default for TypeInstance
 
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Command
 {
 
@@ -208,6 +208,26 @@ pub struct Command
     pub type_name: Option<SupportedType>,
     pub params: Option<Vec<Option<TypeInstance>>>
     
+}
+
+impl Command
+{
+
+    pub fn new(id: Option<u32>, command: String, type_name: Option<SupportedType>, params: Option<Vec<Option<TypeInstance>>>) -> Self
+    {
+
+        Self
+        {
+
+            id,
+            command,
+            type_name,
+            params
+
+        }
+
+    }
+
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]

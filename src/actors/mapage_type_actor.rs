@@ -16,7 +16,7 @@ use libsync::{crossbeam::mpmc::tokio::array_queue::io_channels::{io_channels, IO
 
 use libsync::crossbeam::mpmc::tokio::array_queue::Sender;
 
-use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, SupportedType, TypeInstance, Whatever};
+use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, Command, SupportedType, TypeInstance, Whatever};
 
 use async_recursion::async_recursion;
 
@@ -33,7 +33,8 @@ pub enum MapageTypeActorInputMessage
     ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>),
     ProcessWhatever(OutputFormat, AllOrNot<Whatever>),
     ProcessTypeInstance(OutputFormat, AllOrNot<TypeInstance>),
-
+    ProcessCommand(OutputFormat, Command)
+    
 }
 
 impl Display for MapageTypeActorInputMessage
@@ -73,6 +74,12 @@ impl Display for MapageTypeActorInputMessage
             {
 
                 write!(f, "ProcessProcessWhatever({output_format:?}, {all_or_not_type_instance:?})")
+
+            },
+            MapageTypeActorInputMessage::ProcessCommand(output_format, command) =>
+            {
+
+                write!(f, "ProcessProcessWhatever({output_format:?}, {command:?})")
 
             }
 
@@ -197,6 +204,12 @@ impl MapageTypeActorState
                     {
 
                         processing_res = self.process_all_or_not_input_message(output_format, all_or_not_type_instance).await;
+
+                    }
+                    MapageTypeActorInputMessage::ProcessCommand(output_format, command) =>
+                    {
+
+                        processing_res = self.process_command_message(output_format, command).await;
 
                     }
     
@@ -695,6 +708,74 @@ impl MapageTypeActorState
     //Generic
 
     async fn process_input<T>(&self, output_format: OutputFormat, item_instance: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
+        where T: Serialize + Clone
+    {
+
+        match output_format
+        {
+
+            OutputFormat::Json =>
+            {
+
+                let item_value_res = to_value(item_instance);
+
+                match item_value_res
+                {
+
+                    Ok(res) =>
+                    {
+
+                        let tab_indenter = TabIndenter::new(self.io_server.output_sender_ref()); 
+
+                        self.send_serde_json_value_enum_string_parts(&res, &tab_indenter).await?;
+
+                        self.send_2_newlines().await?;
+
+                        let item_string_res = to_string_pretty(&res);
+
+                        match item_string_res
+                        {
+        
+                            Ok(res) =>
+                            {
+        
+                                self.send_string(res).await?;
+        
+                            }
+                            Err(err) =>
+                            {
+        
+                                self.send_error(err).await?;
+        
+                            }
+        
+                        }
+
+                    }
+                    Err(err) =>
+                    {
+
+                        self.send_error(err).await?;
+
+                        self.send_2_newlines().await?;
+
+                        return Ok(());
+
+                    }
+
+                }
+
+                self.send_4_newlines().await?;
+
+            }
+
+        }
+
+        Ok(())
+
+    }
+
+    async fn process_enum_input<T>(&self, output_format: OutputFormat, item_instance: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
         where T: Into<&'static str> + Serialize + Clone
     {
 
@@ -702,6 +783,9 @@ impl MapageTypeActorState
 
         self.send_2_newlines().await?;
 
+        self.process_input(output_format, item_instance).await?;
+
+        /*
         match output_format
         {
 
@@ -783,6 +867,21 @@ impl MapageTypeActorState
             }
 
         }
+        */
+
+        Ok(())
+
+    }
+
+    async fn process_struct_input<T>(&self, output_format: OutputFormat, item_type_name: &'static str, item_instance: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
+        where T: Serialize + Clone
+    {
+
+        self.send_str(item_type_name).await?;
+
+        self.send_2_newlines().await?;
+
+        self.process_input(output_format, item_instance).await?;
 
         Ok(())
 
@@ -805,7 +904,7 @@ impl MapageTypeActorState
                 for item in T::iter()
                 {
 
-                    self.process_input(output_format, item).await?;
+                    self.process_enum_input(output_format, item).await?;
             
                 }
 
@@ -813,7 +912,7 @@ impl MapageTypeActorState
             AllOrNot::NotAll(all_or_not_input_variant) =>
             {
 
-                self.process_input(output_format, all_or_not_input_variant).await?;
+                self.process_enum_input(output_format, all_or_not_input_variant).await?;
             }
 
         }
@@ -828,6 +927,15 @@ impl MapageTypeActorState
 
         self.process_all_or_not_input(output_format, all_or_not_input).await?;
 
+        self.send_done().await
+
+    }
+
+    async fn process_command_message(&self, output_format: OutputFormat, command: Command) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        self.process_struct_input(output_format, "Command",command).await?;
+        
         self.send_done().await
 
     }
