@@ -33,21 +33,23 @@ impl<P> ParamsSubContents<P>
     pub fn new() -> Rc<Self>
     {
 
-        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(4).visible(true).build();
 
         //
 
-        let id_text_label = Label::builder().label("Params").halign(Align::Start).build();
+        let id_text_label = Label::builder().label("params list:").halign(Align::Start).build();
 
         contents_box.append(&id_text_label);
 
         //
 
-        let params_contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let params_contents_box = Box::builder().orientation(Orientation::Vertical).spacing(8).visible(true).build();
 
         let params_contents_box_sw = ScrolledWindow::builder().child(&params_contents_box).build();
 
         contents_box.append(&params_contents_box_sw);
+
+        params_contents_box_sw.set_height_request(400);
 
         //
 
@@ -62,6 +64,8 @@ impl<P> ParamsSubContents<P>
         buttons_box.append(&remove_button);
 
         contents_box.append(&buttons_box);
+
+        //contents_box.set_height_request(500);
 
         //
 

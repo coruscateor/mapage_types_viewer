@@ -64,6 +64,18 @@ mod params_sub_contents;
 
 pub use params_sub_contents::*;
 
+mod command_shared;
+
+pub use command_shared::*;
+
+mod command_result_sub_contents;
+
+pub use command_result_sub_contents::*;
+
+mod command_error_sub_contents;
+
+pub use command_error_sub_contents::*;
+
 fn main()
 {
 

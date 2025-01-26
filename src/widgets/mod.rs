@@ -19,3 +19,6 @@ mod type_instance;
 
 pub use type_instance::*;
 
+mod bool_dropdown;
+
+pub use bool_dropdown::*;

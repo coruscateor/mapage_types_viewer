@@ -2,7 +2,7 @@ use std::{cell::Cell, num::ParseIntError, ops::Deref, rc::{Rc, Weak}, str::FromS
 
 use gtk_estate::{adw::{glib::property::PropertyGet, prelude::EntryBufferExtManual}, gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, helpers::text_view::get_text_view_string, WidgetContainer};
 
-use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, ParamsSubContents, SupportedType, SupportedTypeSubContents, WindowContentsState};
+use crate::{try_get_id, widgets::new_supported_type_strs_dropdown, AllOrNot, ParamsSubContents, SupportedType, SupportedTypeSubContents, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc, value::{HasOptionalValueGetter, HasValueGetter}};
 
@@ -34,42 +34,93 @@ impl CommandSubContents
     pub fn new() -> Rc<Self>
     {
 
-        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(4).visible(true).build();
 
         //
 
-        let id_text_label = Label::builder().label("id").halign(Align::Start).build();
-
-        contents_box.append(&id_text_label);
-
-        //
-
-        let id_text = Text::new();
-
-        contents_box.append(&id_text);
-        
-
-        //
-
-        let command_text_label = Label::builder().label("command").halign(Align::Start).build();
+        let command_text_label = Label::builder().label("Command").halign(Align::Start).build();
 
         contents_box.append(&command_text_label);
 
         //
 
+        let id_box = Box::builder().orientation(Orientation::Vertical).spacing(2).build();
+
+        //
+
+        let id_text_label = Label::builder().label("id").halign(Align::Start).build();
+
+        id_box.append(&id_text_label);
+
+        //
+
+        let id_text = Text::new();
+
+        id_box.append(&id_text);
+
+        //
+
+        contents_box.append(&id_box);
+
+        //
+
+        let command_box = Box::builder().orientation(Orientation::Vertical).spacing(2).build();
+
+        //
+
+        let command_text_label = Label::builder().label("command").halign(Align::Start).build();
+
+        command_box.append(&command_text_label);
+
+        //
+
         let command_text = Text::new();
 
-        contents_box.append(&command_text);
+        command_box.append(&command_text);
+
+        //
+
+        contents_box.append(&command_box);
+
+        //
+
+        let type_name_box = Box::builder().orientation(Orientation::Vertical).spacing(2).build();
+
+        //
+
+        let type_name_label  = Label::builder().label("type name").halign(Align::Start).build();
+
+        type_name_box.append(&type_name_label);
 
         //
 
         let optional_type_name_sub_contents = OptionalValueSubContents::new(SupportedTypeSubContents::new());
 
-        contents_box.append(optional_type_name_sub_contents.widget_ref());
+        type_name_box.append(optional_type_name_sub_contents.widget_ref());
+
+        //
+
+        contents_box.append(&type_name_box);
+
+        //
+
+        let params_box = Box::builder().orientation(Orientation::Vertical).spacing(2).build();
+
+        //
+
+        let params_label  = Label::builder().label("params").halign(Align::Start).build();
+
+        params_box.append(&params_label);
 
         //
 
         let optional_params_sub_contents = OptionalValueSubContents::new(ParamsSubContents::new());
+
+        params_box.append(optional_params_sub_contents.widget_ref());
+
+        //
+
+        contents_box.append(&params_box);
 
         //
 
@@ -139,8 +190,9 @@ impl HasValueGetter for CommandSubContents
 
         let id_text_string = self.id_text.buffer().text(); //get_text_view_string(&self.id_text);
 
-        let id;
+        let id= try_get_id(&id_text_string, "id")?;
 
+        /*
         let trimmed_id_text_string = id_text_string.trim();
 
         if trimmed_id_text_string.is_empty()
@@ -173,6 +225,7 @@ impl HasValueGetter for CommandSubContents
             }
         
         }
+        */
 
         //command
 

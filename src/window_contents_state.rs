@@ -47,7 +47,7 @@ use serde_json::to_string_pretty;
 
 use crate::actors::{MapageTypeActorInputMessage, MapageTypeActorOutputMessage, MapageTypeActorState};
 
-use crate::{AllOrNot, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents, ApplicationState, CommandSubContents, SupportedType};
+use crate::{AllOrNot, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents, ApplicationState, CommandErrorSubContents, CommandResultSubContents, CommandSubContents, SupportedType};
 
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
@@ -100,7 +100,9 @@ pub struct WindowContentsState
     new_window_button: Button,
     whatever_sub_contents: Rc<AllOrNotWhateverSubContents<Self>>,
     type_instance_sub_contents: Rc<AllOrNotTypeInstanceSubContents<Self>>,
-    command_sub_contents: Rc<CommandSubContents>
+    command_sub_contents: Rc<CommandSubContents>,
+    command_result_sub_contents: Rc<CommandResultSubContents>,
+    command_error_sub_contents: Rc<CommandErrorSubContents>
 
 }
 
@@ -236,6 +238,18 @@ impl WindowContentsState
 
         input_contents_box.append(command_sub_contents.widget_ref());
 
+        //CommandResult
+
+        let command_result_sub_contents = CommandResultSubContents::new();
+
+        input_contents_box.append(command_result_sub_contents.widget_ref());
+
+        //
+
+        let command_error_sub_contents = CommandErrorSubContents::new();
+
+        input_contents_box.append(command_error_sub_contents.widget_ref());
+
         //
 
         let input_contents_box_sw = ScrolledWindow::builder().child(&input_contents_box).build();
@@ -303,7 +317,9 @@ impl WindowContentsState
                 new_window_button,
                 whatever_sub_contents,
                 type_instance_sub_contents,
-                command_sub_contents
+                command_sub_contents,
+                command_result_sub_contents,
+                command_error_sub_contents
 
             }
 
@@ -468,6 +484,20 @@ impl WindowContentsState
 
                             this.clear_text_output();
 
+                            //Make all type input widgets visible.
+
+                            this.supported_type_sub_contents.widget_ref().set_visible(true);
+
+                            this.whatever_sub_contents.widget_ref().set_visible(true);
+
+                            this.type_instance_sub_contents.widget_ref().set_visible(true);
+
+                            this.command_sub_contents.widget_ref().set_visible(true);
+
+                            this.command_result_sub_contents.widget_ref().set_visible(true);
+
+                            this.command_error_sub_contents.widget_ref().set_visible(true);
+
                         });
 
                     }
@@ -505,6 +535,10 @@ impl WindowContentsState
 
                                             this.command_sub_contents.widget_ref().set_visible(false);
 
+                                            this.command_result_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::Whatever =>
                                         {
@@ -516,6 +550,10 @@ impl WindowContentsState
                                             this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                             this.command_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_result_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(false);
 
                                         }
                                         MapageType::TypeInstance =>
@@ -529,6 +567,10 @@ impl WindowContentsState
 
                                             this.command_sub_contents.widget_ref().set_visible(false);
 
+                                            this.command_result_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::Command =>
                                         {
@@ -540,6 +582,10 @@ impl WindowContentsState
                                             this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                             this.command_sub_contents.widget_ref().set_visible(true);
+
+                                            this.command_result_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(false);
 
                                         }
                                         MapageType::CommandResult =>
@@ -553,6 +599,10 @@ impl WindowContentsState
 
                                             this.command_sub_contents.widget_ref().set_visible(false);
 
+                                            this.command_result_sub_contents.widget_ref().set_visible(true);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::CommandError =>
                                         {
@@ -565,6 +615,10 @@ impl WindowContentsState
 
                                             this.command_sub_contents.widget_ref().set_visible(false);
 
+                                            this.command_result_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(true);
+
                                         }
                                         MapageType::StreamedMessage =>
                                         {
@@ -576,6 +630,10 @@ impl WindowContentsState
                                             this.type_instance_sub_contents.widget_ref().set_visible(false);
 
                                             this.command_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_result_sub_contents.widget_ref().set_visible(false);
+
+                                            this.command_error_sub_contents.widget_ref().set_visible(false);
 
                                         }
 
@@ -686,8 +744,18 @@ impl WindowContentsState
                                 should_run = this.output_when_error(this.send_process_command_message(&state));
 
                             }
-                            MapageType::CommandResult => todo!(),
-                            MapageType::CommandError => todo!(),
+                            MapageType::CommandResult =>
+                            {
+
+                                should_run = this.output_when_error(this.send_process_command_result_message(&state));
+
+                            }
+                            MapageType::CommandError =>
+                            {
+
+                                should_run = this.output_when_error(this.send_process_command_error_message(&state));
+
+                            }
                             MapageType::StreamedMessage => todo!(),
                             
                         }
@@ -1009,6 +1077,82 @@ impl WindowContentsState
             {
 
                 let input_message = MapageTypeActorInputMessage::ProcessCommand(state.output_format, res);
+
+                if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
+                {
+
+                    Err(err)
+
+                }
+                else
+                {
+
+                    Ok(true)
+
+                }
+
+            }
+            Err(err) =>
+            {
+
+                self.set_text_output_text(&err);
+
+                Ok(false)
+
+            }
+
+        }
+
+    }
+
+    fn send_process_command_result_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        match self.command_result_sub_contents.value()
+        {
+
+            Ok(res) =>
+            {
+
+                let input_message = MapageTypeActorInputMessage::ProcessCommandResult(state.output_format, res);
+
+                if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
+                {
+
+                    Err(err)
+
+                }
+                else
+                {
+
+                    Ok(true)
+
+                }
+
+            }
+            Err(err) =>
+            {
+
+                self.set_text_output_text(&err);
+
+                Ok(false)
+
+            }
+
+        }
+
+    }
+
+    fn send_process_command_error_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        match self.command_error_sub_contents.value()
+        {
+
+            Ok(res) =>
+            {
+
+                let input_message = MapageTypeActorInputMessage::ProcessCommandError(state.output_format, res);
 
                 if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
                 {

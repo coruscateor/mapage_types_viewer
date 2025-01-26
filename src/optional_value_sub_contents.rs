@@ -32,7 +32,7 @@ impl<T> OptionalValueSubContents<T>
     pub fn new(contained_sub_contents: Rc<T>) -> Rc<Self>
     {
 
-        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(2).visible(true).build();
+        let contents_box = Box::builder().orientation(Orientation::Vertical).spacing(4).visible(true).build();
 
         //
 

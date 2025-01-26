@@ -16,7 +16,7 @@ use libsync::{crossbeam::mpmc::tokio::array_queue::io_channels::{io_channels, IO
 
 use libsync::crossbeam::mpmc::tokio::array_queue::Sender;
 
-use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, Command, SupportedType, TypeInstance, Whatever};
+use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, Command, CommandError, CommandResult, SupportedType, TypeInstance, Whatever};
 
 use async_recursion::async_recursion;
 
@@ -33,7 +33,9 @@ pub enum MapageTypeActorInputMessage
     ProcessSupportedType(OutputFormat, AllOrNot<SupportedType>),
     ProcessWhatever(OutputFormat, AllOrNot<Whatever>),
     ProcessTypeInstance(OutputFormat, AllOrNot<TypeInstance>),
-    ProcessCommand(OutputFormat, Command)
+    ProcessCommand(OutputFormat, Command),
+    ProcessCommandResult(OutputFormat, CommandResult),
+    ProcessCommandError(OutputFormat, CommandError)
     
 }
 
@@ -67,19 +69,31 @@ impl Display for MapageTypeActorInputMessage
             MapageTypeActorInputMessage::ProcessWhatever(output_format, all_or_not_whatever) =>
             {
 
-                write!(f, "ProcessProcessWhatever({output_format:?}, {all_or_not_whatever:?})")
+                write!(f, "ProcessWhatever({output_format:?}, {all_or_not_whatever:?})")
 
             }
             MapageTypeActorInputMessage::ProcessTypeInstance(output_format, all_or_not_type_instance) =>
             {
 
-                write!(f, "ProcessProcessWhatever({output_format:?}, {all_or_not_type_instance:?})")
+                write!(f, "ProcessTypeInstance({output_format:?}, {all_or_not_type_instance:?})")
 
             },
             MapageTypeActorInputMessage::ProcessCommand(output_format, command) =>
             {
 
-                write!(f, "ProcessProcessWhatever({output_format:?}, {command:?})")
+                write!(f, "ProcessCommand({output_format:?}, {command:?})")
+
+            }
+            MapageTypeActorInputMessage::ProcessCommandResult(output_format, command_result) =>
+            {
+
+                write!(f, "ProcessCommandResult({output_format:?}, {command_result:?})")
+
+            }
+            MapageTypeActorInputMessage::ProcessCommandError(output_format, command_error) =>
+            {
+
+                write!(f, "ProcessCommandResult({output_format:?}, {command_error:?})")
 
             }
 
@@ -210,6 +224,18 @@ impl MapageTypeActorState
                     {
 
                         processing_res = self.process_command_message(output_format, command).await;
+
+                    }
+                    MapageTypeActorInputMessage::ProcessCommandResult(output_format, command_result) =>
+                    {
+
+                        processing_res = self.process_command_result_message(output_format, command_result).await;
+
+                    }
+                    MapageTypeActorInputMessage::ProcessCommandError(output_format, command_error) =>
+                    {
+
+                        processing_res = self.process_command_error_message(output_format, command_error).await;
 
                     }
     
@@ -893,8 +919,6 @@ impl MapageTypeActorState
         where T: Into<&'static str> + Serialize + Clone + IntoEnumIterator
     {
 
-        self.send_value_enum_heading(output_format).await?;
-
         match all_or_not_input
         {
 
@@ -925,6 +949,8 @@ impl MapageTypeActorState
         where T: Into<&'static str> + Serialize + Clone + IntoEnumIterator
     {
 
+        self.send_value_enum_heading(output_format).await?;
+
         self.process_all_or_not_input(output_format, all_or_not_input).await?;
 
         self.send_done().await
@@ -934,7 +960,31 @@ impl MapageTypeActorState
     async fn process_command_message(&self, output_format: OutputFormat, command: Command) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
+        self.send_value_enum_heading(output_format).await?;
+
         self.process_struct_input(output_format, "Command",command).await?;
+        
+        self.send_done().await
+
+    }
+
+    async fn process_command_result_message(&self, output_format: OutputFormat, command_result: CommandResult) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        self.send_value_enum_heading(output_format).await?;
+
+        self.process_struct_input(output_format, "CommandResult",command_result).await?;
+        
+        self.send_done().await
+
+    }
+
+    async fn process_command_error_message(&self, output_format: OutputFormat, command_error: CommandError) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        self.send_value_enum_heading(output_format).await?;
+
+        self.process_struct_input(output_format, "CommandError",command_error).await?;
         
         self.send_done().await
 

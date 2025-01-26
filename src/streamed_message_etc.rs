@@ -230,7 +230,7 @@ impl Command
 
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CommandResult
 {
 
@@ -288,7 +288,7 @@ impl CommandResult
 
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)] //Default, 
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct CommandError
 {
 
