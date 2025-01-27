@@ -409,8 +409,9 @@ impl Error for CommandError
     //fn provide<'a>(&'a self, request: &mut std::error::Request<'a>) {}
 }
 
+//Default, 
 
-#[derive(Debug, Default, Serialize, Deserialize, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
+#[derive(Debug, Serialize, Deserialize, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
 pub enum StreamedMessage
 {
 
@@ -418,7 +419,8 @@ pub enum StreamedMessage
     CommandResult(CommandResult),
     CommandError(CommandError),
     Error(SendableText),
-    #[default]
-    Empty
+    //#[default]
+    //Empty
 
 }
+

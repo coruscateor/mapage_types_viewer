@@ -76,6 +76,10 @@ mod command_error_sub_contents;
 
 pub use command_error_sub_contents::*;
 
+mod streamed_message_sub_contents;
+
+pub use streamed_message_sub_contents::*;
+
 fn main()
 {
 

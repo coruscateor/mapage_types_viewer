@@ -22,3 +22,7 @@ pub use type_instance::*;
 mod bool_dropdown;
 
 pub use bool_dropdown::*;
+
+mod streamed_message;
+
+pub use streamed_message::*;

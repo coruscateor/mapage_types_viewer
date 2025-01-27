@@ -14,6 +14,9 @@ use gtk_estate::gtk4::glib::clone;
 
 use crate::{OptionalValueSubContents, Command};
 
+pub type RcCommandSubContents = Rc<CommandSubContents>;
+
+//#[derive(Debug)]
 pub struct CommandSubContents
 {
 

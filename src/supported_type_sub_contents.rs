@@ -1,4 +1,4 @@
-use std::{cell::Cell, ops::Deref, rc::{Rc, Weak}, str::FromStr};
+use std::{cell::Cell, fmt::Debug, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{gtk4::prelude::{BoxExt, Cast, WidgetExt}, impl_contents_box_ref, WidgetContainer};
 
@@ -12,8 +12,9 @@ use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, W
 
 use gtk_estate::gtk4::glib::clone;
 
+//#[derive(Debug)]
 pub struct SupportedTypeSubContents<P>
-    where P: 'static
+    where P: 'static //+ Debug
 {
 
     supported_type_strs_dropdown: DropDown,
@@ -24,7 +25,7 @@ pub struct SupportedTypeSubContents<P>
 }
 
 impl<P> SupportedTypeSubContents<P>
-    where P: 'static
+    where P: 'static + Debug
 {
 
     pub fn new() -> Rc<Self>
