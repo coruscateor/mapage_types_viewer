@@ -92,9 +92,15 @@ impl CommandResultSubContents
 
         //
 
+        let done_dropdown_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).build();
+
         let done_dropdown = new_bool_strs_dropdown();
 
-        done_box.append(&done_dropdown);
+        done_dropdown.set_width_request(80);
+
+        done_dropdown_box.append(&done_dropdown);
+
+        done_box.append(&done_dropdown_box);
 
         //
 

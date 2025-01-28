@@ -1,4 +1,4 @@
-use gtk_estate::{adw::{prelude::*, Application}, StateContainers};
+use gtk_estate::{adw::{glib::ExitCode, prelude::*, Application}, StateContainers};
 
 mod application_state;
 
@@ -80,13 +80,13 @@ mod streamed_message_sub_contents;
 
 pub use streamed_message_sub_contents::*;
 
-fn main()
+fn main() -> ExitCode
 {
 
     let app = Application::builder().application_id("org.mapage_types_viewer").build();
     
     ApplicationState::new(&app);
 
-    app.run();
+    app.run()
 
 }

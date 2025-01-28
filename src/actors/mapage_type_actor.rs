@@ -16,13 +16,15 @@ use libsync::{crossbeam::mpmc::tokio::array_queue::io_channels::{io_channels, IO
 
 use libsync::crossbeam::mpmc::tokio::array_queue::Sender;
 
-use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, Command, CommandError, CommandResult, SupportedType, TypeInstance, Whatever};
+use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, Command, CommandError, CommandResult, StreamedMessage, SupportedType, TypeInstance, Whatever};
 
 use async_recursion::async_recursion;
 
 use crate::TabIndenter;
 
 use corlib::cell::RefCellStore;
+
+use std::any::{type_name, type_name_of_val};
 
 #[derive(Debug)]
 pub enum MapageTypeActorInputMessage
@@ -35,7 +37,8 @@ pub enum MapageTypeActorInputMessage
     ProcessTypeInstance(OutputFormat, AllOrNot<TypeInstance>),
     ProcessCommand(OutputFormat, Command),
     ProcessCommandResult(OutputFormat, CommandResult),
-    ProcessCommandError(OutputFormat, CommandError)
+    ProcessCommandError(OutputFormat, CommandError),
+    ProcessStreamedMessage(OutputFormat, StreamedMessage)
     
 }
 
@@ -96,6 +99,12 @@ impl Display for MapageTypeActorInputMessage
                 write!(f, "ProcessCommandResult({output_format:?}, {command_error:?})")
 
             }
+            MapageTypeActorInputMessage::ProcessStreamedMessage(output_format, streamed_message) =>
+            {
+
+                write!(f, "ProcessStreamedMessage{output_format:?}, {streamed_message:?})")
+
+            },
 
         }
         
@@ -201,7 +210,7 @@ impl MapageTypeActorState
                     MapageTypeActorInputMessage::ProcessSupportedType(output_format, all_or_not_supported_type) =>
                     {
     
-                        processing_res = self.process_all_or_not_input_message(output_format, all_or_not_supported_type).await;
+                        processing_res = self.process_all_or_not_enum_input_message(output_format, all_or_not_supported_type).await;
 
                         //processing_res = self.process_all_or_not_supported_type_message(output_format, all_or_not_supported_type).await; //, output_sender
     
@@ -209,7 +218,7 @@ impl MapageTypeActorState
                     MapageTypeActorInputMessage::ProcessWhatever(output_format, all_or_not_whatever) =>
                     {
 
-                        processing_res = self.process_all_or_not_input_message(output_format, all_or_not_whatever).await;
+                        processing_res = self.process_all_or_not_enum_input_message(output_format, all_or_not_whatever).await;
     
                         //processing_res = self.process_all_or_not_whatever_message(output_format, all_or_not_whatever).await; //, output_sender
     
@@ -217,7 +226,7 @@ impl MapageTypeActorState
                     MapageTypeActorInputMessage::ProcessTypeInstance(output_format, all_or_not_type_instance) =>
                     {
 
-                        processing_res = self.process_all_or_not_input_message(output_format, all_or_not_type_instance).await;
+                        processing_res = self.process_all_or_not_enum_input_message(output_format, all_or_not_type_instance).await;
 
                     }
                     MapageTypeActorInputMessage::ProcessCommand(output_format, command) =>
@@ -236,6 +245,12 @@ impl MapageTypeActorState
                     {
 
                         processing_res = self.process_command_error_message(output_format, command_error).await;
+
+                    }
+                    MapageTypeActorInputMessage::ProcessStreamedMessage(output_format, streamed_message) =>
+                    {
+
+                        processing_res = self.process_streamed_message_message(output_format, streamed_message).await;
 
                     }
     
@@ -668,21 +683,21 @@ impl MapageTypeActorState
 
         self.send_str("Process All:\n\n\n\n").await?;
 
-        self.send_str("SupportedType:\n\n\n\n").await?;
+        //self.send_str("SupportedType:\n\n\n\n").await?;
 
-        self.process_all_or_not_input(output_format, all_or_not_supported_type).await?;
+        self.process_all_or_not_enum_input(output_format, all_or_not_supported_type).await?;
 
         //self.process_all_or_not_supported_type(output_format, all_or_not_supported_type).await?; //, output_sender
 
-        self.send_str("Whatever:\n\n\n\n").await?;
+        //self.send_str("Whatever:\n\n\n\n").await?;
 
-        self.process_all_or_not_input(output_format, all_or_not_whatever).await?;
+        self.process_all_or_not_enum_input(output_format, all_or_not_whatever).await?;
 
         //self.process_all_or_not_whatever(output_format, all_or_not_whatever).await?; //, output_sender
 
-        self.send_str("TypeInstance:\n\n\n\n").await?;
+        //self.send_str("TypeInstance:\n\n\n\n").await?;
 
-        self.process_all_or_not_input(output_format,  all_or_not_type_instance).await?;
+        self.process_all_or_not_enum_input(output_format,  all_or_not_type_instance).await?;
 
         Ok(())
 
@@ -700,23 +715,23 @@ impl MapageTypeActorState
     async fn process_all_default(&self, output_format: OutputFormat) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
     {
 
-        self.send_str("Process All:\n\n\n\n").await?;
+        self.send_str("Process All Default:\n\n\n\n").await?;
 
-        self.send_str("SupportedType:\n\n\n\n").await?;
+        //self.send_str("SupportedType:\n\n\n\n").await?;
 
-        self.process_all_or_not_input::<SupportedType>(output_format, AllOrNot::All).await?;
+        self.process_all_or_not_enum_input::<SupportedType>(output_format, AllOrNot::All).await?;
 
         //self.process_all_or_not_supported_type(output_format, AllOrNot::All).await?; //, output_sender
 
-        self.send_str("Whatever:\n\n\n\n").await?;
+        //self.send_str("Whatever:\n\n\n\n").await?;
 
-        self.process_all_or_not_input::<Whatever>(output_format, AllOrNot::All).await?;
+        self.process_all_or_not_enum_input::<Whatever>(output_format, AllOrNot::All).await?;
 
         //self.process_all_or_not_whatever(output_format, AllOrNot::All).await?; //, output_sender
 
-        self.send_str("TypeInstance:\n\n\n\n").await?;
+        //self.send_str("TypeInstance:\n\n\n\n").await?;
 
-        self.process_all_or_not_input::<TypeInstance>(output_format, AllOrNot::All).await?;
+        self.process_all_or_not_enum_input::<TypeInstance>(output_format, AllOrNot::All).await?;
 
         Ok(())
 
@@ -805,11 +820,13 @@ impl MapageTypeActorState
         where T: Into<&'static str> + Serialize + Clone
     {
 
-        self.send_str(item_instance.clone().into()).await?;
+        self.send_str(type_name_of_val(&item_instance)).await?;
+        
+        self.send_str(":\n\n\n\n").await?;
 
-        self.send_2_newlines().await?;
+        //
 
-        self.process_input(output_format, item_instance).await?;
+        self.process_enum_input_variant(output_format, item_instance).await?;
 
         /*
         match output_format
@@ -899,11 +916,11 @@ impl MapageTypeActorState
 
     }
 
-    async fn process_struct_input<T>(&self, output_format: OutputFormat, item_type_name: &'static str, item_instance: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
-        where T: Serialize + Clone
+    async fn process_enum_input_variant<T>(&self, output_format: OutputFormat, item_instance: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
+        where T: Into<&'static str> + Serialize + Clone
     {
 
-        self.send_str(item_type_name).await?;
+        self.send_str(item_instance.clone().into()).await?;
 
         self.send_2_newlines().await?;
 
@@ -913,11 +930,29 @@ impl MapageTypeActorState
 
     }
 
+    async fn process_struct_input<T>(&self, output_format: OutputFormat,item_instance: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //, output_sender: &Sender<MapageTypeActorOutputMessage>
+        where T: Serialize + Clone
+    {
+
+        self.send_str(type_name_of_val(&item_instance)).await?;
+        
+        self.send_str(":\n\n\n\n").await?;
+
+        self.process_input(output_format, item_instance).await?;
+
+        Ok(())
+
+    }
+
     //Process All Supported Types or just one.
 
-    async fn process_all_or_not_input<T>(&self, output_format: OutputFormat, all_or_not_input: AllOrNot<T>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    async fn process_all_or_not_enum_input<T>(&self, output_format: OutputFormat, all_or_not_input: AllOrNot<T>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
         where T: Into<&'static str> + Serialize + Clone + IntoEnumIterator
     {
+
+        self.send_str(type_name_of_val(&all_or_not_input)).await?;
+        
+        self.send_str(":\n\n\n\n").await?;
 
         match all_or_not_input
         {
@@ -925,10 +960,12 @@ impl MapageTypeActorState
             AllOrNot::All =>
             {
 
+                self.send_str("AllOrNot::All\n\n\n\n").await?;
+
                 for item in T::iter()
                 {
 
-                    self.process_enum_input(output_format, item).await?;
+                    self.process_enum_input_variant(output_format, item).await?;
             
                 }
 
@@ -936,7 +973,10 @@ impl MapageTypeActorState
             AllOrNot::NotAll(all_or_not_input_variant) =>
             {
 
-                self.process_enum_input(output_format, all_or_not_input_variant).await?;
+                self.send_str("AllOrNot::NotAll\n\n\n\n").await?;
+
+                self.process_enum_input_variant(output_format, all_or_not_input_variant).await?;
+
             }
 
         }
@@ -945,13 +985,13 @@ impl MapageTypeActorState
 
     }
 
-    async fn process_all_or_not_input_message<T>(&self, output_format: OutputFormat, all_or_not_input: AllOrNot<T>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    async fn process_all_or_not_enum_input_message<T>(&self, output_format: OutputFormat, all_or_not_input: AllOrNot<T>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
         where T: Into<&'static str> + Serialize + Clone + IntoEnumIterator
     {
 
         self.send_value_enum_heading(output_format).await?;
 
-        self.process_all_or_not_input(output_format, all_or_not_input).await?;
+        self.process_all_or_not_enum_input(output_format, all_or_not_input).await?;
 
         self.send_done().await
 
@@ -962,7 +1002,7 @@ impl MapageTypeActorState
 
         self.send_value_enum_heading(output_format).await?;
 
-        self.process_struct_input(output_format, "Command",command).await?;
+        self.process_struct_input(output_format,command).await?;
         
         self.send_done().await
 
@@ -973,7 +1013,7 @@ impl MapageTypeActorState
 
         self.send_value_enum_heading(output_format).await?;
 
-        self.process_struct_input(output_format, "CommandResult",command_result).await?;
+        self.process_struct_input(output_format,command_result).await?;
         
         self.send_done().await
 
@@ -984,7 +1024,18 @@ impl MapageTypeActorState
 
         self.send_value_enum_heading(output_format).await?;
 
-        self.process_struct_input(output_format, "CommandError",command_error).await?;
+        self.process_struct_input(output_format,command_error).await?;
+        
+        self.send_done().await
+
+    }
+
+    async fn process_streamed_message_message(&self, output_format: OutputFormat, streamed_message: StreamedMessage) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        self.send_value_enum_heading(output_format).await?;
+
+        self.process_enum_input(output_format,streamed_message).await?;
         
         self.send_done().await
 

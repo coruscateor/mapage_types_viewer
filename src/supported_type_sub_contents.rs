@@ -25,7 +25,7 @@ pub struct SupportedTypeSubContents<P>
 }
 
 impl<P> SupportedTypeSubContents<P>
-    where P: 'static + Debug
+    where P: 'static //+ Debug
 {
 
     pub fn new() -> Rc<Self>

@@ -47,7 +47,7 @@ use serde_json::to_string_pretty;
 
 use crate::actors::{MapageTypeActorInputMessage, MapageTypeActorOutputMessage, MapageTypeActorState};
 
-use crate::{AllOrNot, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents, ApplicationState, CommandErrorSubContents, CommandResultSubContents, CommandSubContents, SupportedType};
+use crate::{AllOrNot, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents, ApplicationState, CommandErrorSubContents, CommandResultSubContents, CommandSubContents, StreamedMessageSubContents, SupportedType};
 
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
@@ -102,7 +102,8 @@ pub struct WindowContentsState
     type_instance_sub_contents: Rc<AllOrNotTypeInstanceSubContents<Self>>,
     command_sub_contents: Rc<CommandSubContents>,
     command_result_sub_contents: Rc<CommandResultSubContents>,
-    command_error_sub_contents: Rc<CommandErrorSubContents>
+    command_error_sub_contents: Rc<CommandErrorSubContents>,
+    streamed_message_sub_contents: Rc<StreamedMessageSubContents>
 
 }
 
@@ -244,11 +245,17 @@ impl WindowContentsState
 
         input_contents_box.append(command_result_sub_contents.widget_ref());
 
-        //
+        //CommandError
 
         let command_error_sub_contents = CommandErrorSubContents::new();
 
         input_contents_box.append(command_error_sub_contents.widget_ref());
+
+        //StreamedMessage
+
+        let streamed_message_sub_contents = StreamedMessageSubContents::new();
+
+        input_contents_box.append(streamed_message_sub_contents.widget_ref());
 
         //
 
@@ -282,7 +289,7 @@ impl WindowContentsState
 
         {
 
-            tokio_rt_handle = scs.dyn_application_state_ref(|app_state_ref: &ApplicationState|
+            tokio_rt_handle = scs.application_state_ref_func(|app_state_ref: &ApplicationState|
             {
 
                 app_state_ref.tokio_rt_handle()
@@ -319,7 +326,8 @@ impl WindowContentsState
                 type_instance_sub_contents,
                 command_sub_contents,
                 command_result_sub_contents,
-                command_error_sub_contents
+                command_error_sub_contents,
+                streamed_message_sub_contents
 
             }
 
@@ -382,6 +390,15 @@ impl WindowContentsState
             //parent.text_output.buffer().set_text("");
 
         });
+
+        this.new_window_button.connect_clicked(clone!( #[strong] this, move |_button|
+        {
+
+            //StateContainers::get().dyn_application_state()
+
+            //this.
+
+        }));
 
         //Signal connections
 
@@ -498,6 +515,8 @@ impl WindowContentsState
 
                             this.command_error_sub_contents.widget_ref().set_visible(true);
 
+                            this.streamed_message_sub_contents.widget_ref().set_visible(true);
+
                         });
 
                     }
@@ -539,6 +558,8 @@ impl WindowContentsState
 
                                             this.command_error_sub_contents.widget_ref().set_visible(false);
 
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::Whatever =>
                                         {
@@ -554,6 +575,8 @@ impl WindowContentsState
                                             this.command_result_sub_contents.widget_ref().set_visible(false);
 
                                             this.command_error_sub_contents.widget_ref().set_visible(false);
+
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(false);
 
                                         }
                                         MapageType::TypeInstance =>
@@ -571,6 +594,8 @@ impl WindowContentsState
 
                                             this.command_error_sub_contents.widget_ref().set_visible(false);
 
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::Command =>
                                         {
@@ -586,6 +611,8 @@ impl WindowContentsState
                                             this.command_result_sub_contents.widget_ref().set_visible(false);
 
                                             this.command_error_sub_contents.widget_ref().set_visible(false);
+
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(false);
 
                                         }
                                         MapageType::CommandResult =>
@@ -603,6 +630,8 @@ impl WindowContentsState
 
                                             this.command_error_sub_contents.widget_ref().set_visible(false);
 
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::CommandError =>
                                         {
@@ -619,6 +648,8 @@ impl WindowContentsState
 
                                             this.command_error_sub_contents.widget_ref().set_visible(true);
 
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(false);
+
                                         }
                                         MapageType::StreamedMessage =>
                                         {
@@ -634,6 +665,8 @@ impl WindowContentsState
                                             this.command_result_sub_contents.widget_ref().set_visible(false);
 
                                             this.command_error_sub_contents.widget_ref().set_visible(false);
+
+                                            this.streamed_message_sub_contents.widget_ref().set_visible(true);
 
                                         }
 
@@ -756,7 +789,12 @@ impl WindowContentsState
                                 should_run = this.output_when_error(this.send_process_command_error_message(&state));
 
                             }
-                            MapageType::StreamedMessage => todo!(),
+                            MapageType::StreamedMessage =>
+                            {
+
+                                should_run = this.output_when_error(this.send_process_streamed_message_message(&state));
+
+                            }
                             
                         }
 
@@ -1153,6 +1191,44 @@ impl WindowContentsState
             {
 
                 let input_message = MapageTypeActorInputMessage::ProcessCommandError(state.output_format, res);
+
+                if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
+                {
+
+                    Err(err)
+
+                }
+                else
+                {
+
+                    Ok(true)
+
+                }
+
+            }
+            Err(err) =>
+            {
+
+                self.set_text_output_text(&err);
+
+                Ok(false)
+
+            }
+
+        }
+
+    }
+
+    fn send_process_streamed_message_message(&self, state: &WindowContentsMutState) -> Result<bool, BoundedSendError<MapageTypeActorInputMessage>>
+    {
+
+        match self.streamed_message_sub_contents.value()
+        {
+
+            Ok(res) =>
+            {
+
+                let input_message = MapageTypeActorInputMessage::ProcessStreamedMessage(state.output_format, res);
 
                 if let Err(err) = self.io_client.input_sender_ref().try_send(input_message)
                 {

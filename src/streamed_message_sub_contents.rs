@@ -2,7 +2,7 @@ use std::{cell::Cell, num::ParseIntError, ops::Deref, rc::{Rc, Weak}, str::FromS
 
 use gtk_estate::{adw::{glib::property::PropertyGet, prelude::EntryBufferExtManual}, gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, helpers::text_view::get_text_view_string, WidgetContainer};
 
-use crate::{try_get_id, widgets::{new_streamed_message_strs_dropdown, new_supported_type_strs_dropdown, STREAMED_MESSAGE_STRS}, AllOrNot, CommandSubContents, ParamsSubContents, RcCommandErrorSubContents, RcCommandResultSubContents, RcCommandSubContents, StreamedMessage, SupportedType, SupportedTypeSubContents, WindowContentsState};
+use crate::{try_get_id, widgets::{new_streamed_message_strs_dropdown, new_supported_type_strs_dropdown, STREAMED_MESSAGE_STRS}, AllOrNot, CommandErrorSubContents, CommandResultSubContents, CommandSubContents, ParamsSubContents, RcCommandErrorSubContents, RcCommandResultSubContents, RcCommandSubContents, StreamedMessage, SupportedType, SupportedTypeSubContents, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_event_method, text::SendableText, upgrading::try_up_rc, value::{HasOptionalValueGetter, HasValueGetter}};
 
@@ -56,15 +56,21 @@ impl StreamedMessageSubContents
 
         //
 
+        let streamed_message_strs_box = Box::builder().orientation(Orientation::Horizontal).spacing(5).build();
+
         let streamed_message_strs_dropdown = new_streamed_message_strs_dropdown();
 
-        streamed_message_strs_dropdown.set_width_request(120);
+        streamed_message_strs_box.append(&streamed_message_strs_dropdown);
+
+        streamed_message_strs_dropdown.set_width_request(160);
+
+        contents_box.append(&streamed_message_strs_box);
 
         //
 
         let command_sub_contents = CommandSubContents::new();
 
-        contents_box.append(&contents_box);
+        contents_box.append(command_sub_contents.widget_ref());
 
         let streamed_message_sub_contents_contents = RefCellStore::new(StreamedMessageSubContentsContents::Command(command_sub_contents));
 
@@ -87,21 +93,39 @@ impl StreamedMessageSubContents
         this.streamed_message_strs_dropdown.connect_selected_notify(clone!( #[strong] this, move |streamed_message_strs_dropdown|
         {
 
+            //Remove the current StreamedMessageSubContents object.
+
             this.streamed_message_sub_contents_contents.borrow_with_param(this.clone(), |state, this|
             {
 
-                match state
+                match &*state
                 {
 
                     StreamedMessageSubContentsContents::Command(command_sub_contents) =>
                     {
 
-                        
+                        this.contents_box.remove(command_sub_contents.widget_ref());
 
                     }
-                    StreamedMessageSubContentsContents::CommandResult(command_result_sub_contents) => todo!(),
-                    StreamedMessageSubContentsContents::CommandError(command_error_sub_contents) => todo!(),
-                    StreamedMessageSubContentsContents::Error(text) => todo!(),
+                    StreamedMessageSubContentsContents::CommandResult(command_result_sub_contents) =>
+                    {
+                        
+                        this.contents_box.remove(command_result_sub_contents.widget_ref());
+
+                    }
+                    StreamedMessageSubContentsContents::CommandError(command_error_sub_contents) =>
+                    {
+
+                        this.contents_box.remove(command_error_sub_contents.widget_ref());
+
+                    }
+                    StreamedMessageSubContentsContents::Error(text) =>
+                    {
+
+                        this.contents_box.remove(text);
+
+                    }
+
                 }
 
             });
@@ -131,19 +155,31 @@ impl StreamedMessageSubContents
                     StreamedMessage::CommandResult(_command_result) =>
                     {
 
+                        let command_result_sub_contents = CommandResultSubContents::new();
 
+                        this.contents_box.append(command_result_sub_contents.widget_ref());
+
+                        *state = StreamedMessageSubContentsContents::CommandResult(command_result_sub_contents);
 
                     }
                     StreamedMessage::CommandError(_command_error) =>
                     {
 
+                        let command_error_sub_contents = CommandErrorSubContents::new();
 
+                        this.contents_box.append(command_error_sub_contents.widget_ref());
+
+                        *state = StreamedMessageSubContentsContents::CommandError(command_error_sub_contents);
 
                     }
                     StreamedMessage::Error(_sendable_text) =>
                     {
 
+                        let error_text = Text::new();
 
+                        this.contents_box.append(&error_text);
+
+                        *state = StreamedMessageSubContentsContents::Error(error_text);
 
                     }
 
