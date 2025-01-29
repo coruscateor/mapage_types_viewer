@@ -294,7 +294,7 @@ impl WindowContentsState
 
                 app_state_ref.tokio_rt_handle()
 
-            }).expect("Error: Not ApplicattionState!");
+            }) //.expect("Error: Not ApplicationState!");
 
         }
 
@@ -333,7 +333,7 @@ impl WindowContentsState
 
         });
 
-        //scs_add!(this);
+        scs_add!(this);
 
         let weak_self = this.weak_self();
 
@@ -391,14 +391,21 @@ impl WindowContentsState
 
         });
 
-        this.new_window_button.connect_clicked(clone!( #[strong] this, move |_button|
+        //clone!( #[strong] this, move 
+
+        this.new_window_button.connect_clicked(|_button|
         {
 
-            //StateContainers::get().dyn_application_state()
+            StateContainers::get().application_state_ref_func(|application_state: &ApplicationState|
+            {
+
+                application_state.new_window();
+
+            });
 
             //this.
 
-        }));
+        }); //);
 
         //Signal connections
 
