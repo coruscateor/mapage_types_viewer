@@ -1,4 +1,4 @@
-use gtk_estate::{adw::{glib::ExitCode, prelude::*, Application}, StateContainers};
+use gtk_estate::{adw::{glib::ExitCode, prelude::*, Application}, ClearStateContainersOnDrop, StateContainers};
 
 mod application_state;
 
@@ -82,6 +82,10 @@ pub use streamed_message_sub_contents::*;
 
 fn main() -> ExitCode
 {
+
+    //println!("Start");
+
+    let _clear_scs = ClearStateContainersOnDrop::get();
 
     let app = Application::builder().application_id("org.mapage_types_viewer").build();
     

@@ -34,7 +34,7 @@ use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 use gtk_estate::gtk4::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
 
-use gtk_estate::{impl_weak_self_methods, impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, RcSimpleTimeOut, RcWidgetAdapter, SimpleTimeOut, StateContainers, StoredWidgetObject, WidgetAdapter, WidgetContainer, WidgetStateContainer};
+use gtk_estate::{impl_weak_self_methods, impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, RcWidgetAdapter, StateContainers, StoredWidgetObject, TimeOut, TimeOutRunType, WidgetAdapter, WidgetContainer, WidgetStateContainer};
 
 use gtk_estate::gtk4::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
 
@@ -93,7 +93,7 @@ pub struct WindowContentsState
     text_output: TextView,
     mut_state: RefCellStore<WindowContentsMutState>,
     io_client: IOClient<MapageTypeActorInputMessage, MapageTypeActorOutputMessage>,
-    actor_poller: RcSimpleTimeOut<Weak<WindowContentsState>>,
+    actor_poller: TimeOut<Self>,
     output_format_dropdown: DropDown,
     run_button: Button,
     supported_type_sub_contents: Rc<AllOrNotSupportedTypeSubContents<Self>>,
@@ -302,6 +302,8 @@ impl WindowContentsState
 
         let actor_poller_duration = Duration::from_micros(1);
 
+        //let time_out_run_type = TimeOutRunType::Milliseconds(actor_poller_duration);
+
         //Duration::new(1, 0)
 
         //Content state initialisation
@@ -317,7 +319,7 @@ impl WindowContentsState
                 text_output,
                 mut_state: RefCellStore::new(WindowContentsMutState::new()),
                 io_client,
-                actor_poller: SimpleTimeOut::with_state_ref(actor_poller_duration, weak_self),
+                actor_poller: TimeOut::milliseconds(actor_poller_duration, weak_self), //TimeOut::new(time_out_run_type, weak_self),
                 output_format_dropdown,
                 run_button,
                 supported_type_sub_contents,
@@ -844,73 +846,68 @@ impl WindowContentsState
 
         }));
 
-        this.actor_poller.set_on_time_out_fn(|sto|
+        this.actor_poller.set_time_out_fn(Rc::new(|this: Rc<Self>|
         {
 
-            try_up_rc_pt(sto.state(), |this|
+            let receiver = this.io_client.output_receiver_ref();
+
+            match receiver.try_recv()
             {
 
-                let receiver = this.io_client.output_receiver_ref();
-
-                match receiver.try_recv()
+                Ok(res) =>
                 {
 
-                    Ok(res) =>
+                    match res
                     {
 
-                        match res
+                        MapageTypeActorOutputMessage::WorkInProgressTextResult(work_in_progress_result) =>
                         {
 
-                            MapageTypeActorOutputMessage::WorkInProgressTextResult(work_in_progress_result) =>
+                            if let Some(res) = work_in_progress_result.result()
                             {
 
-                                if let Some(res) = work_in_progress_result.result()
-                                {
+                                //print!("received:\n\n");
 
-                                    //print!("received:\n\n");
+                                //print!("{}", res);
 
-                                    //print!("{}", res);
+                                let mut end_iter = this.text_output.buffer().end_iter();
 
-                                    let mut end_iter = this.text_output.buffer().end_iter();
-
-                                    this.text_output.buffer().insert(&mut end_iter, res);
-
-                                }
-
-                                let is_done = work_in_progress_result.is_done();
-
-                                if is_done
-                                {
-
-                                    this.run_button.set_sensitive(true);
-
-                                }
-
-                                !is_done
+                                this.text_output.buffer().insert(&mut end_iter, res);
 
                             }
+
+                            let is_done = work_in_progress_result.is_done();
+
+                            if is_done
+                            {
+
+                                this.run_button.set_sensitive(true);
+
+                            }
+
+                            !is_done
 
                         }
 
                     }
-                    Err(err) =>
-                    {
 
-                        let err_string = format!("\n\n{err:?}\n\n");
-
-                        let mut end_iter = this.text_output.buffer().end_iter();
-
-                        this.text_output.buffer().insert(&mut end_iter, &err_string);
-
-                        true
-
-                    }
-                    
                 }
+                Err(err) =>
+                {
 
-            })
+                    let err_string = format!("\n\n{err:?}\n\n");
 
-        });
+                    let mut end_iter = this.text_output.buffer().end_iter();
+
+                    this.text_output.buffer().insert(&mut end_iter, &err_string);
+
+                    true
+
+                }
+                
+            }
+
+        }));
 
         this
 
@@ -1338,6 +1335,18 @@ impl WindowContentsState
     }
     */
     
+}
+
+impl Drop for WindowContentsState
+{
+
+    fn drop(&mut self)
+    {
+        
+        println!("WindowContentsState Dropped!")
+
+    }
+
 }
 
 impl_widget_state_container_traits!(Box, WindowContentsState);

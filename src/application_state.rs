@@ -2,9 +2,11 @@ use std::rc::Rc;
 
 use std::any::Any;
 
+use gtk_estate::adw::glib::Propagation;
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
-use gtk_estate::{impl_application_state_container_traits, scs_set_application_state };
+use gtk_estate::gtk4::prelude::GtkWindowExt;
+use gtk_estate::{impl_application_state_container_traits, scs_set_application_state, WidgetStateContainer };
 
 use gtk_estate::{adw::{prelude::ApplicationExt, Application}, AdwApplicationWindowState, ApplicationAdapter, ApplicationStateContainer, StateContainers, StoredApplicationObject, DynApplicationStateContainer};
 
@@ -84,7 +86,7 @@ impl ApplicationState
 
         let content = WindowContentsState::new();
 
-        AdwApplicationWindowState::builder_with_content_visible(|builder| {
+        let adw_app_window_state= AdwApplicationWindowState::builder_with_content_visible(|builder| {
 
             builder.application(&self.app)
             .default_width(1000)
@@ -92,6 +94,20 @@ impl ApplicationState
             .build()
 
         }, &content);
+
+        let app_window = adw_app_window_state.widget_adapter().widget();
+
+        app_window.connect_close_request(|window| {
+
+            //window.destroy();
+
+            let scs = StateContainers::get();
+
+            let _res = scs.remove_by_widget_ref(window);
+
+            Propagation::Proceed
+
+        });
 
     }
 
