@@ -14,6 +14,7 @@ use gtk_estate::gtk4::glib::clone;
 
 use crate::OptionalValueSubContents;
 
+#[derive(Debug)]
 pub struct ParamsSubContents<P>
     where P: 'static
 {

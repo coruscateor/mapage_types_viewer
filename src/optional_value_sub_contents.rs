@@ -14,7 +14,7 @@ use gtk_estate::gtk4::glib::clone;
 
 use gtk_estate::corlib::value::HasValueGetter;
 
-//#[derive(Debug)]
+#[derive(Debug)]
 pub struct OptionalValueSubContents<T>
     where T: WidgetContainer + HasValueGetter + 'static
 {

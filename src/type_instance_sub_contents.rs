@@ -14,6 +14,7 @@ use gtk_estate::gtk4::glib::clone;
 
 use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
 
+#[derive(Debug)]
 pub struct TypeInstanceSubContents<P>
     where P: 'static
 {

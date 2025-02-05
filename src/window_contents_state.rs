@@ -59,6 +59,7 @@ use corlib::cell::RefCellStore;
 
 //When using glib clone!( #[strong] this,... old error underlines don't get removed. 
 
+#[derive(Debug)]
 struct WindowContentsMutState
 {
 
@@ -85,6 +86,7 @@ impl WindowContentsMutState
 
 }
 
+#[derive(Debug)]
 pub struct WindowContentsState
 {
 
@@ -1010,7 +1012,7 @@ impl WindowContentsState
 
     }
 
-    fn send_process_all_defualt_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
+    fn send_process_all_default_message(&self, state: &WindowContentsMutState) -> Result<(), BoundedSendError<MapageTypeActorInputMessage>>
     {
 
         let input_message = MapageTypeActorInputMessage::ProcessAllDefault(state.output_format);

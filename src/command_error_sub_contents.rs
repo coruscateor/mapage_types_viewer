@@ -16,6 +16,7 @@ use crate::{OptionalValueSubContents, Command};
 
 pub type RcCommandErrorSubContents = Rc<CommandErrorSubContents>;
 
+#[derive(Debug)]
 pub struct CommandErrorSubContents
 {
 

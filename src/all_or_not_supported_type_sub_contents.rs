@@ -12,6 +12,7 @@ use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, W
 
 use gtk_estate::gtk4::glib::clone;
 
+#[derive(Debug)]
 pub struct AllOrNotSupportedTypeSubContents<P>
     where P: 'static
 {

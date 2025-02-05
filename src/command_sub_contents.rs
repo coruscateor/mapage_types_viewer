@@ -16,7 +16,7 @@ use crate::{OptionalValueSubContents, Command};
 
 pub type RcCommandSubContents = Rc<CommandSubContents>;
 
-//#[derive(Debug)]
+#[derive(Debug)]
 pub struct CommandSubContents
 {
 

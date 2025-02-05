@@ -14,7 +14,7 @@ use gtk_estate::gtk4::glib::clone;
 
 use crate::{OptionalValueSubContents, Command};
 
-//#[derive(Debug)]
+#[derive(Debug)]
 pub enum StreamedMessageSubContentsContents
 {
 
@@ -25,6 +25,7 @@ pub enum StreamedMessageSubContentsContents
 
 }
 
+#[derive(Debug)]
 pub struct StreamedMessageSubContents
 {
 
