@@ -3,12 +3,12 @@ use std::rc::Rc;
 use std::any::Any;
 
 use gtk_estate::adw::glib::types::StaticType;
-use gtk_estate::adw::glib::Propagation;
+use gtk_estate::adw::glib::{clone, Propagation};
 use gtk_estate::adw::ApplicationWindow;
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
 use gtk_estate::gtk4::prelude::{GtkApplicationExt, GtkWindowExt, WidgetExt};
-use gtk_estate::{impl_application_state_container_traits, scs_set_application_state, WidgetStateContainer };
+use gtk_estate::{impl_application_state_container_traits, scs_set_application_state, RcApplicationAdapter, WidgetStateContainer };
 
 use gtk_estate::{adw::{prelude::ApplicationExt, Application}, AdwApplicationWindowState, ApplicationAdapter, ApplicationStateContainer, StateContainers, StoredApplicationObject, DynApplicationStateContainer};
 
@@ -24,7 +24,7 @@ pub struct ApplicationState
 
     app: Application,
     tokio_rt: Runtime,
-    application_adapter: Rc<ApplicationAdapter<Application, ApplicationState>>
+    //application_adapter: RcApplicationAdapter<Application, ApplicationState>
 
 }
 
@@ -44,26 +44,30 @@ impl ApplicationState
 
                 app: app.clone(),
                 tokio_rt,
-                application_adapter: ApplicationAdapter::new(app, weak_self)
+                //application_adapter: ApplicationAdapter::new(app, weak_self)
 
 
             }
 
         });
 
-        let ws = this.application_adapter.weak_parent();
+        //let ws = this.application_adapter.weak_parent();
 
-        this.app.connect_activate(move |_app|
+        //this.application_adapter.application()
+
+        app.connect_activate(clone!( #[strong] this, move |_app|
         {
 
-            if let Some(this) = ws.upgrade()
-            {
+            this.new_window();
 
-                this.new_window();
+            //if let Some(this) = ws.upgrade()
+            //{
+
+                //this.new_window();
                 
-            }
+            //}
 
-        });
+        }));
 
         scs_set_application_state!(this);
 
@@ -93,7 +97,7 @@ impl ApplicationState
 
         let adw_app_window_state= AdwApplicationWindowState::builder_with_content_visible(|builder| {
 
-            builder.application(&self.app)
+            builder.application(&self.app) //&self.application_adapter.application())
             .default_width(1000)
             .default_height(1000)
             .build()
@@ -143,7 +147,7 @@ impl ApplicationState
 
         println!("In Adw::Application:\n\n");
 
-        let app_windows = self.app.windows();
+        let app_windows = self.app.windows(); //self.application_adapter.application().windows();
 
         println!("Adw::Application Windows len: {:?}\n\n", app_windows.len());
 
@@ -158,7 +162,7 @@ impl ApplicationState
 
 }
 
-impl_application_state_container_traits!();
+//impl_application_state_container_traits!();
 
 impl Drop for ApplicationState
 {
