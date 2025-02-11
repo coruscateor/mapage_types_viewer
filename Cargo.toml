@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 description = "Serialises and outputs instances of types used by Mapage when communicating externally."
 
 [dependencies]
-gtk_estate = { path="../gtk_estate", features = ["gtk_v4_16", "adw_v1_6"] } #Do not remove
+gtk_estate = { path="../gtk_estate", features = ["gtk4_v4_16", "adw_v1_6"] } #Do not remove
 #gtk_estate = { version = "0.3.0", features = ["adw", "gtk_v4_14"] }
 
 act_rs = { path="../act_rs", features = ["tokio"] } #Do not remove

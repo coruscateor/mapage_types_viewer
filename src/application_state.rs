@@ -7,14 +7,16 @@ use gtk_estate::adw::glib::{clone, Propagation};
 use gtk_estate::adw::ApplicationWindow;
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
-use gtk_estate::gtk4::prelude::{GtkApplicationExt, GtkWindowExt, WidgetExt};
-use gtk_estate::{impl_application_state_container_traits, scs_set_application_state, RcApplicationAdapter, WidgetStateContainer };
+use gtk_estate::gtk::prelude::{GtkApplicationExt, GtkWindowExt, WidgetExt};
+use gtk_estate::scs_set_application_state; //RcApplicationAdapter, , WidgetStateContainer
 
-use gtk_estate::{adw::{prelude::ApplicationExt, Application}, AdwApplicationWindowState, ApplicationAdapter, ApplicationStateContainer, StateContainers, StoredApplicationObject, DynApplicationStateContainer};
+//impl_application_state_container_traits,
+
+use gtk_estate::{adw::{prelude::ApplicationExt, Application}, AdwApplicationWindowState, StateContainers}; //ApplicationAdapter, ApplicationStateContainer, , StoredApplicationObject, DynApplicationStateContainer
 
 use tokio::runtime::{Builder, Handle, Runtime};
 
-use gtk_estate::gtk4::Box;
+use gtk_estate::gtk::Box;
 
 use crate::WindowContentsState;
 

@@ -31,14 +31,14 @@ use gtk_estate::adw::{HeaderBar, WindowTitle};
 
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
-use gtk_estate::gtk4::{Align, Label};
+use gtk_estate::gtk::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
 
 use gtk_estate::{impl_weak_self_methods, impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, RcWidgetAdapter, StateContainers, StoredWidgetObject, TimeOut, TimeOutRunType, WidgetAdapter, WidgetContainer, WidgetStateContainer};
 
-use gtk_estate::gtk4::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
+use gtk_estate::gtk::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
 
-use gtk_estate::gtk4::glib::clone;
+use gtk_estate::gtk::glib::clone;
 
 use libsync::crossbeam::mpmc::tokio::array_queue::io_channels::IOClient;
 use libsync::BoundedSendError;

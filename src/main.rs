@@ -1,4 +1,4 @@
-use gtk_estate::{adw::{glib::ExitCode, prelude::*, Application}, ClearStateContainersOnDrop, StateContainers};
+use gtk_estate::{adw::{glib::ExitCode, prelude::*, Application}, StateContainers}; //ClearStateContainersOnDrop,
 
 mod application_state;
 
