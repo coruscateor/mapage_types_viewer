@@ -34,7 +34,9 @@ use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 use gtk_estate::gtk::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
 
-use gtk_estate::{impl_weak_self_methods, impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, RcWidgetAdapter, StateContainers, StoredWidgetObject, TimeOut, TimeOutRunType, WidgetAdapter, WidgetContainer, WidgetStateContainer};
+use gtk_estate::{impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, StateContainers, TimeOut, TimeOutRunType, WidgetAdapter, WidgetContainer, WidgetObject, WidgetStateContainer};
+
+//impl_weak_self_methods, 
 
 use gtk_estate::gtk::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
 
@@ -90,7 +92,7 @@ impl WindowContentsMutState
 pub struct WindowContentsState
 {
 
-    widget_adapter: Rc<WidgetAdapter<Box, WindowContentsState>>,
+    widget_adapter: Rc<WidgetAdapter<Box, Self>>,
     mapage_types_dropdown: DropDown,
     text_output: TextView,
     mut_state: RefCellStore<WindowContentsMutState>,
@@ -915,7 +917,7 @@ impl WindowContentsState
 
     }
 
-    impl_weak_self_methods!(widget_adapter);
+    //impl_weak_self_methods!(widget_adapter);
 
     fn set_text_output_text(&self, text: &str)
     {

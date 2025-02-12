@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use gtk_estate::gtk4::DropDown;
+use gtk_estate::gtk::DropDown;
 
 use serde::{Serialize, Deserialize};
 

@@ -1,4 +1,4 @@
-use gtk_estate::{gtk4::DropDown, RcWidgetAdapter, StoredWidgetObject, WidgetAdapter, WidgetStateContainer};
+use gtk_estate::{gtk::DropDown, WidgetAdapter};
 
 use strum::{EnumCount, IntoEnumIterator};
 

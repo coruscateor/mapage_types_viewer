@@ -102,7 +102,7 @@ impl ApplicationState
             builder.application(&self.app) //&self.application_adapter.application())
             .default_width(1000)
             .default_height(1000)
-            .build()
+            //.build()
 
         }, &content);
 

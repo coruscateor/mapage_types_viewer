@@ -85,7 +85,7 @@ fn main() -> ExitCode
 
     //println!("Start");
 
-    let _clear_scs = ClearStateContainersOnDrop::get();
+    //let _clear_scs = ClearStateContainersOnDrop::get();
 
     let app = Application::builder().application_id("org.mapage_types_viewer").build();
     

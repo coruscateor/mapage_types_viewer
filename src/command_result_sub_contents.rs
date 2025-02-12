@@ -1,6 +1,6 @@
 use std::{cell::Cell, num::ParseIntError, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::property::PropertyGet, prelude::EntryBufferExtManual}, gtk4::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, helpers::text_view::get_text_view_string, WidgetContainer};
+use gtk_estate::{adw::{glib::property::PropertyGet, prelude::EntryBufferExtManual}, gtk::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, helpers::text_view::get_text_view_string, WidgetContainer};
 
 use crate::{try_get_id, widgets::{new_bool_strs_dropdown, new_supported_type_strs_dropdown}, AllOrNot, CommandResult, ParamsSubContents, SupportedType, SupportedTypeSubContents, TypeInstanceSubContents, WindowContentsState};
 
@@ -8,9 +8,9 @@ use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_
 
 use corlib::events::SingleSubEvent; 
 
-use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
+use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
 
-use gtk_estate::gtk4::glib::clone;
+use gtk_estate::gtk::glib::clone;
 
 use crate::{OptionalValueSubContents, Command};
 

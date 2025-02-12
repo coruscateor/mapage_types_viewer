@@ -4,13 +4,13 @@ use std::rc::Rc;
 use corlib::value::HasOptionalValueGetter;
 use gtk_estate::adw::prelude::{BoxExt, Cast};
 
-use gtk_estate::gtk4::{Box, CheckButton, Orientation, Widget};
+use gtk_estate::gtk::{Box, CheckButton, Orientation, Widget};
 
-use gtk_estate::gtk4::prelude::{CheckButtonExt, WidgetExt};
+use gtk_estate::gtk::prelude::{CheckButtonExt, WidgetExt};
 
 use gtk_estate::WidgetContainer;
 
-use gtk_estate::gtk4::glib::clone;
+use gtk_estate::gtk::glib::clone;
 
 use gtk_estate::corlib::value::HasValueGetter;
 

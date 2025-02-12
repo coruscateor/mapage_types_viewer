@@ -1,6 +1,6 @@
 use std::{cell::Cell, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{gtk4::prelude::{BoxExt, Cast, WidgetExt}, impl_contents_box_ref, WidgetContainer};
+use gtk_estate::{gtk::prelude::{BoxExt, Cast, WidgetExt}, impl_contents_box_ref, WidgetContainer};
 
 use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, TypeInstance, WindowContentsState};
 
@@ -8,9 +8,9 @@ use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrad
 
 use corlib::events::SingleSubEvent; 
 
-use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
+use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
 
-use gtk_estate::gtk4::glib::clone;
+use gtk_estate::gtk::glib::clone;
 
 #[derive(Debug)]
 pub struct AllOrNotSupportedTypeSubContents<P>

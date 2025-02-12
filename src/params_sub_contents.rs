@@ -1,6 +1,6 @@
 use std::{cell::Cell, ops::Deref, process::Command, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::prelude::ButtonExt, gtk4::{prelude::{BoxExt, Cast, WidgetExt}, Button, CheckButton, ScrolledWindow, Text}, WidgetContainer};
+use gtk_estate::{adw::prelude::ButtonExt, gtk::{prelude::{BoxExt, Cast, WidgetExt}, Button, CheckButton, ScrolledWindow, Text}, WidgetContainer};
 
 use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, SupportedTypeSubContents, TypeInstance, TypeInstanceSubContents, WindowContentsState};
 
@@ -8,9 +8,9 @@ use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_
 
 use corlib::events::SingleSubEvent; 
 
-use gtk_estate::gtk4::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
+use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
 
-use gtk_estate::gtk4::glib::clone;
+use gtk_estate::gtk::glib::clone;
 
 use crate::OptionalValueSubContents;
 

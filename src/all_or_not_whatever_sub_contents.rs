@@ -1,6 +1,6 @@
 use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
-use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk4::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}, impl_contents_box_ref, WidgetContainer};
+use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}, impl_contents_box_ref, WidgetContainer};
 
 use crate::{widgets::new_whatever_strs_dropdown, AllOrNot, Whatever, WindowContentsState};
 
@@ -10,7 +10,7 @@ use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent};
 
 use gtk_estate::helpers::text_view::get_text_view_string;
 
-use gtk_estate::gtk4::glib::clone;
+use gtk_estate::gtk::glib::clone;
 
 use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
 

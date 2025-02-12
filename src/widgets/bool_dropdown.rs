@@ -1,4 +1,4 @@
-use gtk_estate::gtk4::DropDown;
+use gtk_estate::gtk::DropDown;
 
 static BOOL_STRS: &[&'static str] = &["false", "true"];
 
