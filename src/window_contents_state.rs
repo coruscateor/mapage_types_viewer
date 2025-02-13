@@ -27,14 +27,14 @@ use gtk_estate::adw::gdk::Display;
 
 use gtk_estate::adw::prelude::{BoxExt, ButtonExt, Cast, ObjectExt, WidgetExt};
 
-use gtk_estate::adw::{HeaderBar, WindowTitle};
+use gtk_estate::adw::{Application, ApplicationWindow, HeaderBar, WindowTitle};
 
-use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
+use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef, weak_self::WeakSelf};
 
 use gtk_estate::gtk::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
 
-use gtk_estate::{impl_widget_state_container_traits, scs_add, DynWidgetStateContainer, StateContainers, TimeOut, TimeOutRunType, WidgetAdapter, WidgetContainer, WidgetObject, WidgetStateContainer};
+use gtk_estate::{impl_widget_state_container_traits, scs_add, widget_upgrade_error_debug_println, DynWidgetStateContainer, StateContainers, TimeOut, TimeOutRunType, WidgetAdapter, WidgetContainer, WidgetObject, WidgetStateContainer};
 
 //impl_weak_self_methods, 
 
@@ -92,7 +92,8 @@ impl WindowContentsMutState
 pub struct WindowContentsState
 {
 
-    widget_adapter: Rc<WidgetAdapter<Box, Self>>,
+    widget_adapter: Rc<WidgetAdapter<ApplicationWindow, Self>>,
+    //widget_adapter: Rc<WidgetAdapter<Box, Self>>,
     mapage_types_dropdown: DropDown,
     text_output: TextView,
     mut_state: RefCellStore<WindowContentsMutState>,
@@ -114,7 +115,7 @@ pub struct WindowContentsState
 impl WindowContentsState
 {
 
-    pub fn new() -> Rc<Self>
+    pub fn new(app: &Application) -> Rc<Self>
     {
 
         //Layout
@@ -285,6 +286,23 @@ impl WindowContentsState
 
         contents_box.append(&contents_paned);
 
+        //ApplicationWindow
+
+        let builder = ApplicationWindow::builder();
+
+        //ApplicationWindow strong reference is in the Application.
+
+        let window = builder.application(app)
+            .default_width(1000)
+            .default_height(1000)
+
+            //Make sure to set the content of the ApplicationWindow.
+
+            .content(&contents_box)
+            .visible(true)
+            .hide_on_close(false)
+            .build();
+
         //Tokio
 
         let scs = StateContainers::get();
@@ -318,7 +336,8 @@ impl WindowContentsState
             Self
             {
 
-                widget_adapter: WidgetAdapter::new(&contents_box, weak_self),
+                widget_adapter: WidgetAdapter::new(&window, weak_self),
+                //widget_adapter: WidgetAdapter::new(&contents_box, weak_self),
                 mapage_types_dropdown,
                 text_output,
                 mut_state: RefCellStore::new(WindowContentsMutState::new()),
@@ -339,8 +358,8 @@ impl WindowContentsState
 
         });
 
-        scs_add!(this);
-
+        //scs_add!(this);
+        
         let weak_self = this.weak_self();
 
         //type_instance_sub_contents
@@ -405,7 +424,7 @@ impl WindowContentsState
             StateContainers::get().application_state_ref_func(|application_state: &ApplicationState|
             {
 
-                application_state.new_window();
+                widget_upgrade_error_debug_println(application_state.new_window());
 
             });
 
@@ -1353,4 +1372,4 @@ impl Drop for WindowContentsState
 
 }
 
-impl_widget_state_container_traits!(Box, WindowContentsState);
+impl_widget_state_container_traits!(ApplicationWindow, WindowContentsState); //Box, 

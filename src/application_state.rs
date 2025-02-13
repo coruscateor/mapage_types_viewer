@@ -1,18 +1,21 @@
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use std::any::Any;
 
+use corlib::cell::RefCellStore;
+use corlib::inc_dec::IncDecSelf;
+use corlib::weak_self::WeakSelf;
 use gtk_estate::adw::glib::types::StaticType;
 use gtk_estate::adw::glib::{clone, Propagation};
 use gtk_estate::adw::ApplicationWindow;
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
 use gtk_estate::gtk::prelude::{GtkApplicationExt, GtkWindowExt, WidgetExt};
-use gtk_estate::scs_set_application_state; //RcApplicationAdapter, , WidgetStateContainer
+use gtk_estate::{scs_set_application_state, widget_upgrade_error_debug_println, WidgetStateContainer, WidgetUpgradeResult}; //RcApplicationAdapter, , WidgetStateContainer
 
 //impl_application_state_container_traits,
 
-use gtk_estate::{adw::{prelude::ApplicationExt, Application}, AdwApplicationWindowState, StateContainers}; //ApplicationAdapter, ApplicationStateContainer, , StoredApplicationObject, DynApplicationStateContainer
+use gtk_estate::{adw::{prelude::ApplicationExt, Application}, StateContainers}; //AdwApplicationWindowState, //ApplicationAdapter, ApplicationStateContainer, , StoredApplicationObject, DynApplicationStateContainer
 
 use tokio::runtime::{Builder, Handle, Runtime};
 
@@ -27,6 +30,7 @@ pub struct ApplicationState
     app: Application,
     tokio_rt: Runtime,
     //application_adapter: RcApplicationAdapter<Application, ApplicationState>
+    weak_window_states: RefCellStore<Vec<Weak<WindowContentsState>>>
 
 }
 
@@ -47,7 +51,7 @@ impl ApplicationState
                 app: app.clone(),
                 tokio_rt,
                 //application_adapter: ApplicationAdapter::new(app, weak_self)
-
+                weak_window_states: RefCellStore::new(Vec::new())
 
             }
 
@@ -60,7 +64,7 @@ impl ApplicationState
         app.connect_activate(clone!( #[strong] this, move |_app|
         {
 
-            this.new_window();
+            widget_upgrade_error_debug_println(this.new_window());
 
             //if let Some(this) = ws.upgrade()
             //{
@@ -92,11 +96,23 @@ impl ApplicationState
 
     }
 
-    pub fn new_window(&self)
+    pub fn new_window(&self) -> WidgetUpgradeResult
     {
 
-        let content = WindowContentsState::new();
+        let adw_app_window_state = WindowContentsState::new(&self.app);
 
+        let weak_window_state = adw_app_window_state.weak_self();
+
+        self.weak_window_states.borrow_mut_with_param(weak_window_state, |mut state, weak_window_state|
+        {
+
+            state.push(weak_window_state);
+
+        });
+
+        //let content = WindowContentsState::new(&self.app);
+
+        /*
         let adw_app_window_state= AdwApplicationWindowState::builder_with_content_visible(|builder| {
 
             builder.application(&self.app) //&self.application_adapter.application())
@@ -105,28 +121,31 @@ impl ApplicationState
             //.build()
 
         }, &content);
+        */
 
-        let app_window = adw_app_window_state.widget_adapter().widget();
+        let app_window = adw_app_window_state.widget_adapter().widget()?;
 
-        app_window.connect_close_request(|window| {
+        app_window.connect_close_request(|_window| {
 
             //window.destroy();
 
             let scs = StateContainers::get();
 
-            let _res = scs.remove_by_widget_ref(window);
+            let widget_state_ref = scs.widget_state_ref();
 
-            println!("scs buckets_len: {}", scs.buckets_len());
+            //let _res = widget_state_ref.remove_by_widget_ref(window);
 
-            println!("scs buckets_capacity: {}", scs.buckets_capacity());
+            println!("scs buckets_len: {}", widget_state_ref.buckets_len());
 
-            println!("scs bucket_len ApplicationWindow {:#?}", scs.bucket_len(&ApplicationWindow::static_type()));
+            println!("scs buckets_capacity: {}", widget_state_ref.buckets_capacity());
 
-            println!("scs bucket_capacity ApplicationWindow {:#?}", scs.bucket_len(&ApplicationWindow::static_type()));
+            println!("scs bucket_len ApplicationWindow {:#?}", widget_state_ref.bucket_len(&ApplicationWindow::static_type()));
+
+            println!("scs bucket_capacity ApplicationWindow {:#?}", widget_state_ref.bucket_len(&ApplicationWindow::static_type()));
         
-            println!("scs bucket_len Box {:#?}", scs.bucket_len(&Box::static_type()));
+            //println!("scs bucket_len Box {:#?}", widget_state_ref.bucket_len(&Box::static_type()));
 
-            println!("scs bucket_capacity Box {:#?}", scs.bucket_len(&Box::static_type()));
+            //println!("scs bucket_capacity Box {:#?}", widget_state_ref.bucket_len(&Box::static_type()));
 
             //println!("scs after remove_by_widget_ref: {:?}\n\n", scs);
 
@@ -153,12 +172,34 @@ impl ApplicationState
 
         println!("Adw::Application Windows len: {:?}\n\n", app_windows.len());
 
+        println!("app_windows.iter()\n\n");
+
         for item in app_windows.iter()
         {
 
             println!("Adw::ApplicationWindow:\n\n{:?}\n\n", item);
 
         }
+
+        println!("weak_window_states\n\n");
+
+        self.weak_window_states.borrow(|state|
+        {
+
+            let mut number = 1;
+
+            for item in state.iter()
+            {
+    
+                println!("{}, Strong Count: {} Weak Count: {}", number, item.strong_count(), item.weak_count());
+
+                number.pp();
+    
+            }
+
+        });
+        
+        Ok(())
 
     }
 
