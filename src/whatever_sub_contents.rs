@@ -10,6 +10,8 @@ use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent};
 
 use gtk_estate::helpers::text_view::get_text_view_string;
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
@@ -109,7 +111,7 @@ impl<P> WhateverSubContents<P>
 
         //Try set the whatever variant, or all, when is a String is selected.
 
-        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |whatever_strs_dropdown|
+        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[weak] this, move |whatever_strs_dropdown|
         {
 
             if let Some(item) = whatever_strs_dropdown.selected_item()
@@ -128,7 +130,7 @@ impl<P> WhateverSubContents<P>
 
         }));
 
-        this.value_input.connect_move_focus(clone!( #[strong] this, move |_value_input, _|
+        this.value_input.connect_move_focus(clone!( #[weak] this, move |_value_input, _|
         {
 
             if let Some(item) = this.whatever_strs_dropdown.selected_item()

@@ -10,6 +10,8 @@ use corlib::events::{SingleSubEvent, PubSingleSubArgsEvent};
 
 use gtk_estate::helpers::text_view::get_text_view_string;
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
@@ -126,7 +128,7 @@ impl<P> TypeInstanceSubContents<P>
 
         //Try set the TypeInstance variant, or all, when is a String is selected.
 
-        this.type_instance_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |type_instance_strs_dropdown|
+        this.type_instance_strs_dropdown.connect_selected_item_notify(clone!( #[weak] this, move |type_instance_strs_dropdown|
         {
 
             if let Some(item) = type_instance_strs_dropdown.selected_item()
@@ -145,7 +147,7 @@ impl<P> TypeInstanceSubContents<P>
 
         }));
 
-        this.value_input.connect_move_focus(clone!( #[strong] this, move |_value_input, _|
+        this.value_input.connect_move_focus(clone!( #[weak] this, move |_value_input, _|
         {
 
             if let Some(item) = this.type_instance_strs_dropdown.selected_item()
@@ -163,15 +165,6 @@ impl<P> TypeInstanceSubContents<P>
             }
 
         }));
-
-        /*
-        this.whatever_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |type_instance_strs_dropdown|
-        {
-
-
-
-        }));
-        */
         
         this
 

@@ -10,6 +10,8 @@ use gtk_estate::gtk::prelude::{CheckButtonExt, WidgetExt};
 
 use gtk_estate::WidgetContainer;
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 use gtk_estate::corlib::value::HasValueGetter;
@@ -62,7 +64,7 @@ impl<T> OptionalValueSubContents<T>
 
         });
 
-        this.check_button.connect_toggled(clone!( #[strong] this, move |check_button|
+        this.check_button.connect_toggled(clone!( #[weak] this, move |check_button|
         {
 
             this.contained_sub_contents.widget_ref().set_sensitive(check_button.is_active());

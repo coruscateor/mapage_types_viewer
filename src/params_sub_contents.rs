@@ -10,6 +10,8 @@ use corlib::events::SingleSubEvent;
 
 use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 use crate::OptionalValueSubContents;
@@ -86,14 +88,14 @@ impl<P> ParamsSubContents<P>
         
         });
 
-        this.add_button.connect_clicked(clone!( #[strong] this, move |_button|
+        this.add_button.connect_clicked(clone!( #[weak] this, move |_button|
         {
 
             this.append_type_instance_contents();
 
         }));
 
-        this.remove_button.connect_clicked(clone!( #[strong] this, move |_button|
+        this.remove_button.connect_clicked(clone!( #[weak] this, move |_button|
         {
 
             this.remove_type_instance_contents();

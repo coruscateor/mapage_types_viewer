@@ -10,6 +10,8 @@ use corlib::events::SingleSubEvent;
 
 use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 #[derive(Debug)]
@@ -72,7 +74,7 @@ impl<P> AllOrNotSupportedTypeSubContents<P>
 
         //let weak = this.downgrade();
 
-        this.supported_type_strs_dropdown.connect_selected_item_notify(clone!( #[strong] this, move |supported_type_strs_dropdown|
+        this.supported_type_strs_dropdown.connect_selected_item_notify(clone!( #[weak] this, move |supported_type_strs_dropdown|
         {
 
             //try_up_rc(&weak, |this|

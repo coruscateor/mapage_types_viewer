@@ -10,6 +10,8 @@ use corlib::events::SingleSubEvent;
 
 use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Widget};
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 use crate::{OptionalValueSubContents, Command};
@@ -91,7 +93,7 @@ impl StreamedMessageSubContents
         
         });
 
-        this.streamed_message_strs_dropdown.connect_selected_notify(clone!( #[strong] this, move |streamed_message_strs_dropdown|
+        this.streamed_message_strs_dropdown.connect_selected_notify(clone!( #[weak] this, move |streamed_message_strs_dropdown|
         {
 
             //Remove the current StreamedMessageSubContents object.

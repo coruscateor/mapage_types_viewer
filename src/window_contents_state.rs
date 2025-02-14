@@ -40,6 +40,8 @@ use gtk_estate::{impl_widget_state_container_traits, scs_add, widget_upgrade_err
 
 use gtk_estate::gtk::{Box, Button, CenterBox, DropDown, Orientation, Paned, ScrolledWindow, StringObject, TextView, prelude::{TextViewExt, TextBufferExt}};
 
+use gtk_estate::gtk::glib;
+
 use gtk_estate::gtk::glib::clone;
 
 use libsync::crossbeam::mpmc::tokio::array_queue::io_channels::IOClient;
@@ -300,7 +302,7 @@ impl WindowContentsState
 
             .content(&contents_box)
             .visible(true)
-            .hide_on_close(false)
+            //.hide_on_close(false)
             .build();
 
         //Tokio
@@ -357,6 +359,8 @@ impl WindowContentsState
             }
 
         });
+
+        let _ = scs.widget_state_ref().add(&this);
 
         //scs_add!(this);
         
@@ -444,7 +448,7 @@ impl WindowContentsState
 
         //clone!( #[strong] this,
 
-        this.output_format_dropdown.connect_selected_notify(clone!( #[strong] this, move |format_dropdown|
+        this.output_format_dropdown.connect_selected_notify(clone!( #[weak] this, move |format_dropdown|
         {
 
             //let this = this_moved;
@@ -507,7 +511,7 @@ impl WindowContentsState
 
         //let this2 = this.clone();
 
-        this.mapage_types_dropdown.connect_selected_notify(clone!( #[strong] this, move |mapage_types_dropdown|
+        this.mapage_types_dropdown.connect_selected_notify(clone!( #[weak] this, move |mapage_types_dropdown|
         {
 
             //try_up_rc(&weak_self_moved, |this|
@@ -736,7 +740,7 @@ impl WindowContentsState
 
         //let this2 = this.clone();
         
-        this.run_button.connect_clicked(clone!( #[strong] this, move |run_button|
+        this.run_button.connect_clicked(clone!( #[weak] this, move |run_button|
         {
 
             //try_up_rc(&weak_self_moved, |this|

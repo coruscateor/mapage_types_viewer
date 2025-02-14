@@ -274,7 +274,8 @@ impl MapageTypeActorState
             }
             None =>
             {
-                print!("MapageTypeActorState: Empty message received.");
+                
+                //print!("MapageTypeActorState: Empty message received.");
 
                 false
 

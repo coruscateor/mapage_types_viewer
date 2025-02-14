@@ -3,14 +3,24 @@ use std::rc::{Rc, Weak};
 use std::any::Any;
 
 use corlib::cell::RefCellStore;
+
+use corlib::impl_weak_self_trait;
 use corlib::inc_dec::IncDecSelf;
+
 use corlib::weak_self::WeakSelf;
+
+use gtk_estate::adw::glib;
+
 use gtk_estate::adw::glib::types::StaticType;
+
 use gtk_estate::adw::glib::{clone, Propagation};
+
 use gtk_estate::adw::ApplicationWindow;
+
 use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef};
 
 use gtk_estate::gtk::prelude::{GtkApplicationExt, GtkWindowExt, WidgetExt};
+
 use gtk_estate::{scs_set_application_state, widget_upgrade_error_debug_println, WidgetStateContainer, WidgetUpgradeResult}; //RcApplicationAdapter, , WidgetStateContainer
 
 //impl_application_state_container_traits,
@@ -30,7 +40,8 @@ pub struct ApplicationState
     app: Application,
     tokio_rt: Runtime,
     //application_adapter: RcApplicationAdapter<Application, ApplicationState>
-    weak_window_states: RefCellStore<Vec<Weak<WindowContentsState>>>
+    //weak_window_states: RefCellStore<Vec<Weak<WindowContentsState>>>
+    weak_self: Weak<ApplicationState>
 
 }
 
@@ -51,7 +62,8 @@ impl ApplicationState
                 app: app.clone(),
                 tokio_rt,
                 //application_adapter: ApplicationAdapter::new(app, weak_self)
-                weak_window_states: RefCellStore::new(Vec::new())
+                //weak_window_states: RefCellStore::new(Vec::new())
+                weak_self: weak_self.clone()
 
             }
 
@@ -61,7 +73,7 @@ impl ApplicationState
 
         //this.application_adapter.application()
 
-        app.connect_activate(clone!( #[strong] this, move |_app|
+        app.connect_activate(clone!( #[weak] this, move |_app|
         {
 
             widget_upgrade_error_debug_println(this.new_window());
@@ -103,12 +115,14 @@ impl ApplicationState
 
         let weak_window_state = adw_app_window_state.weak_self();
 
+        /*
         self.weak_window_states.borrow_mut_with_param(weak_window_state, |mut state, weak_window_state|
         {
 
             state.push(weak_window_state);
 
         });
+        */
 
         //let content = WindowContentsState::new(&self.app);
 
@@ -125,6 +139,7 @@ impl ApplicationState
 
         let app_window = adw_app_window_state.widget_adapter().widget()?;
 
+        /*
         app_window.connect_close_request(|_window| {
 
             //window.destroy();
@@ -134,7 +149,6 @@ impl ApplicationState
             let widget_state_ref = scs.widget_state_ref();
 
             //let _res = widget_state_ref.remove_by_widget_ref(window);
-
             println!("scs buckets_len: {}", widget_state_ref.buckets_len());
 
             println!("scs buckets_capacity: {}", widget_state_ref.buckets_capacity());
@@ -152,7 +166,9 @@ impl ApplicationState
             Propagation::Proceed
 
         });
+        */
 
+        /*
         if let Some(parent) = app_window.parent()
         {
 
@@ -180,7 +196,9 @@ impl ApplicationState
             println!("Adw::ApplicationWindow:\n\n{:?}\n\n", item);
 
         }
+        */
 
+        /*
         println!("weak_window_states\n\n");
 
         self.weak_window_states.borrow(|state|
@@ -198,12 +216,15 @@ impl ApplicationState
             }
 
         });
+        */
         
         Ok(())
 
     }
 
 }
+
+impl_weak_self_trait!(ApplicationState);
 
 //impl_application_state_container_traits!();
 
