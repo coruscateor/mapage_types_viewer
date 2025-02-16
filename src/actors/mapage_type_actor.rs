@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::{Debug, Display}};
 
-use act_rs::{impl_on_started_and_ending_async, impl_mac_task_actor};
+use act_rs::{get_input_async, impl_mac_task_actor, impl_on_started_and_ending_async};
 
 use corlib::{inc_dec::IncDecSelf, text::SendableText, WorkInProgressResult};
 use paste::paste;
@@ -12,7 +12,7 @@ use serde_json::{to_string, to_string_pretty, to_value, Value};
 use strum::IntoEnumIterator;
 use tokio::task::JoinHandle;
 
-use libsync::{crossbeam::mpmc::tokio::array_queue::io_channels::{io_channels, IOClient, IOServer}, BoundedSendError};
+use libsync::{crossbeam::mpmc::tokio::array_queue::io_channels::{io_channels, IOClient, IOServer}, BoundedSendError, ReceiveResult};
 
 use libsync::crossbeam::mpmc::tokio::array_queue::Sender;
 
@@ -184,10 +184,13 @@ impl MapageTypeActorState
     async fn run_async(&mut self) -> bool
     {
 
+        get_input_async!(self)
+
+        /*
         match self.io_server.input_receiver_ref().recv().await
         {
 
-            Some(message) =>
+            Ok(message) =>
             {
 
                 let processing_res;
@@ -272,7 +275,7 @@ impl MapageTypeActorState
                 }
 
             }
-            None =>
+            Err(_err) =>
             {
                 
                 //print!("MapageTypeActorState: Empty message received.");
@@ -282,6 +285,7 @@ impl MapageTypeActorState
             }
 
         }
+        */
 
         //let output_sender = self.io_server.output_sender_ref().clone();
 
@@ -348,6 +352,78 @@ impl MapageTypeActorState
             
         }
         */
+
+    }
+    
+    async fn get_input_async(&mut self) -> ReceiveResult<MapageTypeActorInputMessage>
+    {
+
+        self.io_server.input_receiver_ref().recv().await
+
+    }
+
+    async fn input_ok_async(&mut self, message: MapageTypeActorInputMessage) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
+    {
+
+        match message
+        {
+
+            MapageTypeActorInputMessage::ProcessAll(output_format, all_or_not_supported_type, all_or_not_whatever, all_or_not_type_instance) =>
+            {
+                
+                self.process_all_message(output_format, all_or_not_supported_type, all_or_not_whatever, all_or_not_type_instance).await
+
+            }
+            MapageTypeActorInputMessage::ProcessAllDefault(output_format) =>
+            {
+                
+                self.process_all_default_message(output_format).await
+                
+            }
+            MapageTypeActorInputMessage::ProcessSupportedType(output_format, all_or_not_supported_type) =>
+            {
+
+                self.process_all_or_not_enum_input_message(output_format, all_or_not_supported_type).await
+
+            }
+            MapageTypeActorInputMessage::ProcessWhatever(output_format, all_or_not_whatever) =>
+            {
+
+                self.process_all_or_not_enum_input_message(output_format, all_or_not_whatever).await
+
+            }
+            MapageTypeActorInputMessage::ProcessTypeInstance(output_format, all_or_not_type_instance) =>
+            {
+
+                self.process_all_or_not_enum_input_message(output_format, all_or_not_type_instance).await
+
+            }
+            MapageTypeActorInputMessage::ProcessCommand(output_format, command) =>
+            {
+
+                self.process_command_message(output_format, command).await
+
+            }
+            MapageTypeActorInputMessage::ProcessCommandResult(output_format, command_result) =>
+            {
+
+                self.process_command_result_message(output_format, command_result).await
+
+            }
+            MapageTypeActorInputMessage::ProcessCommandError(output_format, command_error) =>
+            {
+
+                self.process_command_error_message(output_format, command_error).await
+
+            }
+            MapageTypeActorInputMessage::ProcessStreamedMessage(output_format, streamed_message) =>
+            {
+
+                self.process_streamed_message_message(output_format, streamed_message).await
+
+            }
+
+        }
 
     }
 
