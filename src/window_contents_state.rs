@@ -29,7 +29,7 @@ use gtk_estate::adw::prelude::{BoxExt, ButtonExt, Cast, ObjectExt, WidgetExt};
 
 use gtk_estate::adw::{Application, ApplicationWindow, HeaderBar, WindowTitle};
 
-use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef, weak_self::WeakSelf};
+use gtk_estate::corlib::{impl_as_any_ref, convert::AsAnyRef, WeakSelf};
 
 use gtk_estate::gtk::{Align, Label};
 use gtk_estate::helpers::widget_ext::set_hvexpand_t;
@@ -81,7 +81,7 @@ impl WindowContentsMutState
         Self
         {
 
-            output_format: OutputFormat::Json,
+            output_format: OutputFormat::SerdeJson,
             all_or_not_mapage_type: AllOrNot::All
 
         }

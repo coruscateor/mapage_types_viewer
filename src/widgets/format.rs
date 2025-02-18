@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 
 use strum::{EnumCount, IntoEnumIterator};
 
-use strum_macros::{AsRefStr, EnumCount, EnumIter, EnumString, FromRepr, IntoStaticStr};
+use strum_macros::{AsRefStr, Display, EnumCount, EnumIter, EnumString, FromRepr, IntoStaticStr};
 
 static OUTPUT_FORMAT_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 {
@@ -24,13 +24,14 @@ static OUTPUT_FORMAT_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 
 });
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
-#[strum(serialize_all = "UPPERCASE")]
+#[derive(Display, Debug, Default, Clone, Copy, Serialize, Deserialize, EnumString, FromRepr, EnumIter, AsRefStr, EnumCount, IntoStaticStr)]
+//#[strum(serialize_all = "UPPERCASE")]
 pub enum OutputFormat
 {
 
+    #[strum(to_string = "Serde JSON")]
     #[default]
-    Json
+    SerdeJson
 
 }
 

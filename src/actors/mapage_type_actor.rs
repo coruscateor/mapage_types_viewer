@@ -546,7 +546,7 @@ impl MapageTypeActorState
         match output_format
         {
 
-            OutputFormat::Json =>
+            OutputFormat::SerdeJson =>
             {
 
                 self.send_serde_json_value_heading().await
@@ -832,7 +832,7 @@ impl MapageTypeActorState
         match output_format
         {
 
-            OutputFormat::Json =>
+            OutputFormat::SerdeJson =>
             {
 
                 let item_value_res = to_value(item_instance);

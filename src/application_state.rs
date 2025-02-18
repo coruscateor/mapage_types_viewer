@@ -7,7 +7,7 @@ use corlib::cell::RefCellStore;
 use corlib::impl_weak_self_trait;
 use corlib::inc_dec::IncDecSelf;
 
-use corlib::weak_self::WeakSelf;
+use corlib::WeakSelf;
 
 use gtk_estate::adw::glib;
 
