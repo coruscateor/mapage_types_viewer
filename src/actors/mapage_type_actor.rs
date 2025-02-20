@@ -427,6 +427,7 @@ impl MapageTypeActorState
 
     }
 
+    /*
     async fn send_sendable_text(&self, sendable_text: SendableText) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
@@ -476,6 +477,7 @@ impl MapageTypeActorState
         self.send_string(error.to_string()).await
 
     }
+    */
 
     /*
     async fn send_done_sendable_text(&mut self, sendable_text: SendableText) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
@@ -486,12 +488,14 @@ impl MapageTypeActorState
     }
     */
 
+    /*
     async fn send_done(&self) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
         self.io_server.output_sender_ref().send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::done_none())).await
 
     }
+    */
 
     /*
     async fn send_not_done_enum_string_parts<T>(&mut self, item: T) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
@@ -533,6 +537,7 @@ impl MapageTypeActorState
     }
     */
 
+    /*
     async fn send_serde_json_value_heading(&self) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
 
@@ -556,9 +561,11 @@ impl MapageTypeActorState
         }
 
     }
+    */
 
     //The GTK TextView Buffer doesn't like it when you try to append null characters to it.
 
+    /*
     fn check_for_nulls(string: &String) -> Option<String>
     {
 
@@ -576,7 +583,9 @@ impl MapageTypeActorState
         }
 
     }
+    */
 
+    /*
     #[async_recursion]
     async fn send_serde_json_value_enum_string_parts<'a>(&'a self, value: &Value, tab_indenter: &TabIndenter<'a>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>>
     {
@@ -754,6 +763,7 @@ impl MapageTypeActorState
         Ok(())
 
     }
+    */
 
     async fn process_all(&self, output_format: OutputFormat, all_or_not_supported_type: AllOrNot<SupportedType>, all_or_not_whatever: AllOrNot<Whatever>, all_or_not_type_instance: AllOrNot<TypeInstance>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //output_sender: &Sender<MapageTypeActorOutputMessage>, 
     {
@@ -1532,6 +1542,7 @@ impl_mac_task_actor!(MapageTypeActor);
 
 //
 
+/*
 fn print_display<T>(debug_printable: T)
     where T: Display
 {
@@ -1541,6 +1552,7 @@ fn print_display<T>(debug_printable: T)
     print!("{}", err_string);
 
 }
+*/
 
 //Minimal implementation:
 
