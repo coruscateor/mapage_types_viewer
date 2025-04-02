@@ -873,7 +873,7 @@ impl WindowContentsState
 
         }));
 
-        this.actor_poller.set_time_out_fn(Rc::new(|this: Rc<Self>|
+        this.actor_poller.set_time_out_fn(&Rc::new(|this: Rc<Self>|
         {
 
             let receiver = this.io_client.output_receiver_ref();

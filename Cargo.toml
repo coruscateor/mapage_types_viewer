@@ -12,8 +12,8 @@ gtk_estate = { path="../gtk_estate", features = ["gtk4_v4_16", "adw_v1_6"] } #Do
 act_rs = { path="../act_rs", features = ["tokio"] } #Do not remove
 #act_rs = "0.1.0"
 
-corlib = { path="../corlib", features = ["serde"] } #Do not remove
-#corlib = "0.1.0"
+#corlib = { path="../corlib", features = ["serde"] } #Do not remove
+corlib = { version = "0.4.1", features = ["serde"] }
 
 serde = { version = "1.0.215", features = ["derive"] }
 
