@@ -9,7 +9,9 @@ use std::rc::Rc;
 use std::cell::LazyCell;
 use std::sync::LazyLock;
 
-use crate::TypeInstance;
+//use crate::TypeInstance;
+
+use mapage_lib::TypeInstance;
 
 static TYPE_INSTANCE_VARIANT_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 {

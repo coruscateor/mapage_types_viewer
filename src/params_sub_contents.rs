@@ -2,7 +2,7 @@ use std::{cell::Cell, ops::Deref, process::Command, rc::{Rc, Weak}, str::FromStr
 
 use gtk_estate::{adw::prelude::ButtonExt, gtk::{prelude::{BoxExt, Cast, WidgetExt}, Button, CheckButton, ScrolledWindow, Text}, WidgetContainer};
 
-use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, SupportedTypeSubContents, TypeInstance, TypeInstanceSubContents, WindowContentsState};
+use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedTypeSubContents,TypeInstanceSubContents, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc, value::{HasOptionalValueGetter, HasValueGetter}};
 
@@ -15,6 +15,8 @@ use gtk_estate::gtk::glib;
 use gtk_estate::gtk::glib::clone;
 
 use crate::OptionalValueSubContents;
+
+use mapage_lib::{SupportedType, TypeInstance};
 
 #[derive(Debug)]
 pub struct ParamsSubContents<P>

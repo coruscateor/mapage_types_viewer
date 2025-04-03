@@ -2,7 +2,7 @@ use std::{cell::Cell, num::ParseIntError, ops::Deref, rc::{Rc, Weak}, str::FromS
 
 use gtk_estate::{adw::{glib::property::PropertyGet, prelude::EntryBufferExtManual}, gtk::{prelude::{BoxExt, Cast, WidgetExt}, CheckButton, Text}, helpers::text_view::get_text_view_string, WidgetContainer};
 
-use crate::{try_get_id, widgets::{new_bool_strs_dropdown, new_supported_type_strs_dropdown}, AllOrNot, CommandResult, ParamsSubContents, SupportedType, SupportedTypeSubContents, TypeInstanceSubContents, WindowContentsState};
+use crate::{try_get_id, widgets::{new_bool_strs_dropdown, new_supported_type_strs_dropdown}, AllOrNot, ParamsSubContents, SupportedTypeSubContents, TypeInstanceSubContents, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc, value::{HasOptionalValueGetter, HasValueGetter}};
 
@@ -12,7 +12,9 @@ use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Wi
 
 use gtk_estate::gtk::glib::clone;
 
-use crate::{OptionalValueSubContents, Command};
+use crate::OptionalValueSubContents;
+
+use mapage_lib::{Command, CommandError, CommandResult, SupportedType};
 
 pub type RcCommandResultSubContents = Rc<CommandResultSubContents>;
 

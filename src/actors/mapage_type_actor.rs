@@ -16,7 +16,9 @@ use libsync::{crossbeam::mpmc::tokio::array_queue::io_channels::{io_channels, IO
 
 use libsync::crossbeam::mpmc::tokio::array_queue::Sender;
 
-use crate::{widgets::{MapageType, OutputFormat}, AllOrNot, Command, CommandError, CommandResult, StreamedMessage, SupportedType, TypeInstance, Whatever};
+use crate::{widgets::{MapageType, OutputFormat}, AllOrNot};
+
+use mapage_lib::{Command, CommandError, CommandResult, StreamedMessage, SupportedType, TypeInstance, Whatever};
 
 use async_recursion::async_recursion;
 
@@ -25,6 +27,8 @@ use crate::TabIndenter;
 use corlib::cell::RefCellStore;
 
 use std::any::{type_name, type_name_of_val};
+
+use super::output_processing::SerdeJsonProcessor;
 
 #[derive(Debug)]
 pub enum MapageTypeActorInputMessage
@@ -145,8 +149,9 @@ impl Display for MapageTypeActorOutputMessage
 pub struct MapageTypeActorState
 {
 
-    io_server: IOServer<MapageTypeActorInputMessage, MapageTypeActorOutputMessage> //,
+    io_server: IOServer<MapageTypeActorInputMessage, MapageTypeActorOutputMessage>, //,
     //test_rfc_store_state: RefCellStore<()>
+    serde_json_processor: SerdeJsonProcessor
 
 }
 
@@ -158,11 +163,14 @@ impl MapageTypeActorState
 
         let (io_client, io_server) = io_channels(2, 100);
 
+        let serde_json_processor = SerdeJsonProcessor::new(io_server.output_sender_ref());
+
         (io_client, Self
         {
 
-            io_server //,
+            io_server, //,
             //test_rfc_store_state: RefCellStore::new(())
+            serde_json_processor
 
         })
 
@@ -371,55 +379,145 @@ impl MapageTypeActorState
             MapageTypeActorInputMessage::ProcessAll(output_format, all_or_not_supported_type, all_or_not_whatever, all_or_not_type_instance) =>
             {
                 
-                self.process_all_message(output_format, all_or_not_supported_type, all_or_not_whatever, all_or_not_type_instance).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_all_message(all_or_not_supported_type, all_or_not_whatever, all_or_not_type_instance).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessAllDefault(output_format) =>
             {
+
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
                 
-                self.process_all_default_message(output_format).await
+                        self.serde_json_processor.process_all_default_message().await
+
+                    }
+
+                }
                 
             }
             MapageTypeActorInputMessage::ProcessSupportedType(output_format, all_or_not_supported_type) =>
             {
 
-                self.process_all_or_not_enum_input_message(output_format, all_or_not_supported_type).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_all_or_not_enum_input_message(all_or_not_supported_type).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessWhatever(output_format, all_or_not_whatever) =>
             {
 
-                self.process_all_or_not_enum_input_message(output_format, all_or_not_whatever).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_all_or_not_enum_input_message( all_or_not_whatever).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessTypeInstance(output_format, all_or_not_type_instance) =>
             {
 
-                self.process_all_or_not_enum_input_message(output_format, all_or_not_type_instance).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_all_or_not_enum_input_message( all_or_not_type_instance).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessCommand(output_format, command) =>
             {
 
-                self.process_command_message(output_format, command).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_command_message(command).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessCommandResult(output_format, command_result) =>
             {
 
-                self.process_command_result_message(output_format, command_result).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_command_result_message(command_result).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessCommandError(output_format, command_error) =>
             {
 
-                self.process_command_error_message(output_format, command_error).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_command_error_message(command_error).await
+
+                    }
+
+                }
 
             }
             MapageTypeActorInputMessage::ProcessStreamedMessage(output_format, streamed_message) =>
             {
 
-                self.process_streamed_message_message(output_format, streamed_message).await
+                match output_format
+                {
+        
+                    OutputFormat::SerdeJson =>
+                    {
+
+                        self.serde_json_processor.process_streamed_message_message(streamed_message).await
+
+                    }
+
+                }
 
             }
 
@@ -765,6 +863,7 @@ impl MapageTypeActorState
     }
     */
 
+    /*
     async fn process_all(&self, output_format: OutputFormat, all_or_not_supported_type: AllOrNot<SupportedType>, all_or_not_whatever: AllOrNot<Whatever>, all_or_not_type_instance: AllOrNot<TypeInstance>) -> Result<(), BoundedSendError<MapageTypeActorOutputMessage>> //output_sender: &Sender<MapageTypeActorOutputMessage>, 
     {
 
@@ -1127,6 +1226,7 @@ impl MapageTypeActorState
         self.send_done().await
 
     }
+    */
 
     /*
 

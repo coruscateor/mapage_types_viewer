@@ -8,7 +8,9 @@ use std::cell::LazyCell;
 
 use std::sync::LazyLock;
 
-use crate::Whatever;
+//use crate::Whatever;
+
+use mapage_lib::Whatever;
 
 static WHATEVER_VARIANT_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 {

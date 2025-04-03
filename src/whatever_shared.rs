@@ -2,7 +2,9 @@ use std::{fmt::Display, str::FromStr};
 
 use corlib::inc_dec::IncDecSelf;
 
-use crate::Whatever;
+//use crate::Whatever;
+
+use mapage_lib::Whatever;
 
 pub fn try_set_specific_whatever(variant_str: &str, value_input_str: &str) -> Result<(Whatever, String), String>
 {

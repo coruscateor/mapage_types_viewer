@@ -51,11 +51,13 @@ use serde_json::to_string_pretty;
 
 use crate::actors::{MapageTypeActorInputMessage, MapageTypeActorOutputMessage, MapageTypeActorState};
 
-use crate::{AllOrNot, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents, ApplicationState, CommandErrorSubContents, CommandResultSubContents, CommandSubContents, StreamedMessageSubContents, SupportedType};
+use crate::{AllOrNot, AllOrNotSupportedTypeSubContents, AllOrNotTypeInstanceSubContents, AllOrNotWhateverSubContents, ApplicationState, CommandErrorSubContents, CommandResultSubContents, CommandSubContents, StreamedMessageSubContents};
 
 use crate::widgets::{new_mapage_type_strs_dropdown, new_supported_type_strs_dropdown, output_format_strs_dropdown, MapageType, OutputFormat};
 
 use corlib::cell::RefCellStore;
+
+use mapage_lib::SupportedType;
 
 //use gtk::glib;
 

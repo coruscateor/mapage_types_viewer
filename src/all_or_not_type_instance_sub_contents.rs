@@ -2,7 +2,9 @@ use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}, impl_contents_box_ref, WidgetContainer};
 
-use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
+use crate::{widgets::{new_type_instance_strs_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, WindowContentsState};
+
+use mapage_lib::{TypeInstance, Whatever};
 
 use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc, value::HasValueGetter};
 

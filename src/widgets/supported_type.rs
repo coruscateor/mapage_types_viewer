@@ -7,7 +7,9 @@ use std::rc::Rc;
 use std::cell::LazyCell;
 use std::sync::LazyLock;
 
-use crate::SupportedType;
+//use crate::SupportedType;
+
+use mapage_lib::SupportedType;
 
 static SUPPORTED_TYPE_VARIANT_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 {

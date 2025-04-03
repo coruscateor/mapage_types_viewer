@@ -2,7 +2,9 @@ use std::{cell::Cell, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{gtk::prelude::{BoxExt, Cast, WidgetExt}, impl_contents_box_ref, WidgetContainer};
 
-use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, SupportedType, TypeInstance, WindowContentsState};
+use crate::{widgets::new_supported_type_strs_dropdown, AllOrNot, WindowContentsState};
+
+use mapage_lib::{SupportedType, TypeInstance};
 
 use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc, value::HasValueGetter};
 

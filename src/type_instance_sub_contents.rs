@@ -2,7 +2,7 @@ use std::{cell::Cell, fmt::Display, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{adw::{glib::{clone::Downgrade, property::PropertyGet}, prelude::{BoxExt, Cast, EditableExt, IsA, TextBufferExt, TextViewExt, WidgetExt}}, gtk::{Align, Box, DropDown, Label, Orientation, ScrolledWindow, StringObject, Text, TextView, Widget}, impl_contents_box_ref, WidgetContainer};
 
-use crate::{widgets::{new_type_instance_strs_dropdown, new_type_instance_strs_no_all_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, TypeInstance, Whatever, WindowContentsState};
+use crate::{widgets::{new_type_instance_strs_dropdown, new_type_instance_strs_no_all_dropdown, new_whatever_strs_no_all_dropdown}, AllOrNot, WindowContentsState};
 
 use corlib::{cell::RefCellStore, events::{PubSingleSubEvent, SingleSubArgsEvent}, impl_pub_single_sub_args_event_method, impl_pub_single_sub_event_method, inc_dec::IncDecSelf, upgrading::try_up_rc, value::HasValueGetter};
 
@@ -15,6 +15,8 @@ use gtk_estate::gtk::glib;
 use gtk_estate::gtk::glib::clone;
 
 use crate::{try_set_specific_whatever, parse_error_at_index, parse_array};
+
+use mapage_lib::{TypeInstance, Whatever};
 
 #[derive(Debug)]
 pub struct TypeInstanceSubContents<P>

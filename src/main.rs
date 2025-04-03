@@ -8,9 +8,9 @@ mod window_contents_state;
 
 pub use window_contents_state::*;
 
-mod streamed_message_etc;
+//mod streamed_message_etc;
 
-pub use streamed_message_etc::*;
+//pub use streamed_message_etc::*;
 
 mod widgets;
 

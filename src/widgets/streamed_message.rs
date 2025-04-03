@@ -8,7 +8,9 @@ use strum::{EnumCount, IntoEnumIterator};
 
 use strum_macros::{AsRefStr, EnumCount, EnumIter, EnumString, FromRepr, IntoStaticStr};
 
-use crate::StreamedMessage;
+//use crate::StreamedMessage;
+
+use mapage_lib:: StreamedMessage;
 
 pub static STREAMED_MESSAGE_STRS: LazyLock<Vec<&'static str>> = LazyLock::new(||
 {

@@ -2,7 +2,7 @@ use std::{cell::Cell, fmt::Debug, ops::Deref, rc::{Rc, Weak}, str::FromStr};
 
 use gtk_estate::{gtk::prelude::{BoxExt, Cast, WidgetExt}, impl_contents_box_ref, WidgetContainer};
 
-use crate::{widgets::{new_supported_type_strs_dropdown, new_supported_type_strs_no_all_dropdown}, SupportedType};
+use crate::{widgets::{new_supported_type_strs_dropdown, new_supported_type_strs_no_all_dropdown}};
 
 use corlib::{events::PubSingleSubEvent, impl_pub_single_sub_event_method, upgrading::try_up_rc, value::HasValueGetter};
 
@@ -13,6 +13,8 @@ use gtk_estate::gtk::{Align, Box, DropDown, Label, Orientation, StringObject, Wi
 use gtk_estate::gtk::glib;
 
 use gtk_estate::gtk::glib::clone;
+
+use mapage_lib::SupportedType;
 
 #[derive(Debug)]
 pub struct SupportedTypeSubContents<P>

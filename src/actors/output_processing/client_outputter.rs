@@ -1,10 +1,13 @@
 use std::error::Error;
 
-use corlib::{text::SendableText, WorkInProgressResult};
+use corlib::{impl_get_ref, text::SendableText, WorkInProgressResult};
 
 use libsync::{crossbeam::mpmc::tokio::array_queue::Sender, BoundedSendError};
+use serde::Serialize;
 
-use crate::actors::MapageTypeActorOutputMessage;
+use crate::{actors::MapageTypeActorOutputMessage, AllOrNot};
+
+use mapage_lib::{SupportedType, TypeInstance, Whatever};
 
 pub struct ClientOutputter
 {
@@ -16,13 +19,13 @@ pub struct ClientOutputter
 impl ClientOutputter
 {
 
-    pub fn new(sender: Sender<MapageTypeActorOutputMessage>) -> Self
+    pub fn new(sender: &Sender<MapageTypeActorOutputMessage>) -> Self
     {
 
         Self
         {
             
-            sender
+            sender: sender.clone()
         
         }
 
@@ -84,7 +87,9 @@ impl ClientOutputter
         self.sender.send(MapageTypeActorOutputMessage::WorkInProgressTextResult(WorkInProgressResult::done_none())).await
 
     }
-    
+
+    impl_get_ref!(sender, Sender<MapageTypeActorOutputMessage>);
+
 }
 
 
