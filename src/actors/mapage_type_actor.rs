@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::{Debug, Display}};
 
-use act_rs::{get_input_async, impl_mac_task_actor, impl_on_started_and_ending_async};
+use act_rs::{get_input_async, impl_mac_task_actor, impl_pre_and_post_run_async};
 
 use corlib::{inc_dec::IncDecSelf, text::SendableText, WorkInProgressResult};
 use paste::paste;
@@ -189,7 +189,7 @@ impl MapageTypeActorState
 
     }
 
-    impl_on_started_and_ending_async!();
+    impl_pre_and_post_run_async!();
 
     async fn run_async(&mut self) -> bool
     {
